@@ -41,16 +41,17 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidt
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x071b24); scene.fog=new THREE.Fog(0x071b24,55,145);
-const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,300); camera.position.set(0,30,38);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x071b24); scene.fog=new THREE.Fog(0x071b24,48,155);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,300); camera.position.set(0,36,42);
 const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.055; controls.minDistance=10; controls.maxDistance=80; controls.maxPolarAngle=Math.PI*.46; controls.minPolarAngle=.35; controls.target.set(0,0,0);
 
-scene.add(new THREE.HemisphereLight(0xbbeeff,0x163d2b,2.0));
+scene.add(new THREE.HemisphereLight(0xbbeeff,0x163d2b,2.3));
+const fill=new THREE.DirectionalLight(0x9edcff,1.1); fill.position.set(28,18,-25); scene.add(fill);
 const sun=new THREE.DirectionalLight(0xfff1cf,3.2); sun.position.set(-20,45,18); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); scene.add(sun);
 
-const ocean=new THREE.Mesh(new THREE.CylinderGeometry(47,47,.7,96),new THREE.MeshStandardMaterial({color:0x0b617b,roughness:.72,metalness:.05}));
+const ocean=new THREE.Mesh(new THREE.CylinderGeometry(50,50,.65,128),new THREE.MeshStandardMaterial({color:0x075a73,roughness:.55,metalness:.08}));
 ocean.position.y=-1.05; ocean.receiveShadow=true; scene.add(ocean);
-const oceanRing=new THREE.Mesh(new THREE.RingGeometry(47.1,51,96),new THREE.MeshBasicMaterial({color:0x164f60,side:THREE.DoubleSide}));
+const oceanRing=new THREE.Mesh(new THREE.RingGeometry(50.1,54,128),new THREE.MeshBasicMaterial({color:0x164f60,side:THREE.DoubleSide}));
 oceanRing.rotation.x=-Math.PI/2; oceanRing.position.y=-.66; scene.add(oceanRing);
 
 const names=['Luzon','Visayas','Mindanao'],colors=[0x48c878,0x55aee0,0xe5a052],emojis=['🟢','🔵','🟠'];
@@ -73,24 +74,31 @@ function makeIsland(isl){
  const shape=islandPoints(isl),s=new THREE.Shape(); s.moveTo(shape[0].x,shape[0].y); shape.slice(1).forEach(p=>s.lineTo(p.x,p.y)); s.closePath();
  const g=new THREE.ExtrudeGeometry(s,{depth:1.2,bevelEnabled:true,bevelSegments:2,bevelSize:.22,bevelThickness:.35,curveSegments:3});
  g.rotateX(-Math.PI/2);
- const m=new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:.88,metalness:0});
+ const m=new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:.9,metalness:0});
  const mesh=new THREE.Mesh(g,m); mesh.position.y=-.25; mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh); worldObjects.push(mesh);
- // raised center terrain
- const top=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(isl.w,isl.d)*.26,Math.min(isl.w,isl.d)*.42,1.1,12),new THREE.MeshStandardMaterial({color:0x5e7c52,roughness:1}));
- top.scale.set(1.4,.75,1.1); top.position.set(isl.x,.9,isl.z); top.castShadow=true; scene.add(top); worldObjects.push(top);
+ // layered terrain terraces
+ for(let layer=0;layer<3;layer++){
+  const scale=1-layer*.16;
+  const tg=new THREE.CylinderGeometry(Math.min(isl.w,isl.d)*.23*scale,Math.min(isl.w,isl.d)*.34*scale,.45+layer*.12,10);
+  const tm=new THREE.MeshStandardMaterial({color:[0x5e8052,0x75965b,0x93a967][layer],roughness:1});
+  const terrain=new THREE.Mesh(tg,tm); terrain.scale.set(1.45,.9,1.15); terrain.position.set(isl.x,.72+layer*.42,isl.z); terrain.castShadow=true; scene.add(terrain); worldObjects.push(terrain);
+ }
+ // coastline foam
+ const coast=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shape.map(p=>new THREE.Vector3(p.x,.42,p.y))),new THREE.LineBasicMaterial({color:0xc8f2d2,transparent:true,opacity:.55}));
+ scene.add(coast); worldObjects.push(coast);
  // mountains
- for(let i=0;i<Math.max(2,Math.floor(isl.w/2));i++){
+ for(let i=0;i<Math.max(3,Math.floor(isl.w/1.8));i++){
   const x=isl.x+(hash(i,isl.seed,2)-.5)*isl.w*.62,z=isl.z+(hash(i,isl.seed,3)-.5)*isl.d*.55;
-  const h=1.4+hash(i,isl.seed,4)*2.8;
-  const mt=new THREE.Mesh(new THREE.ConeGeometry(.75+hash(i,isl.seed,5)*.6,h,6),new THREE.MeshStandardMaterial({color:0x53645b,roughness:1}));
+  const h=1.7+hash(i,isl.seed,4)*3.6;
+  const mt=new THREE.Mesh(new THREE.ConeGeometry(.65+hash(i,isl.seed,5)*.65,h,7),new THREE.MeshStandardMaterial({color:0x4e6257,roughness:1}));
   mt.position.set(x,h/2,z); mt.castShadow=true; scene.add(mt); worldObjects.push(mt);
  }
  // trees
- for(let i=0;i<Math.floor(isl.w*1.5);i++){
+ for(let i=0;i<Math.floor(isl.w*2.2);i++){
   const x=isl.x+(hash(i,isl.seed,6)-.5)*isl.w*.7,z=isl.z+(hash(i,isl.seed,7)-.5)*isl.d*.65;
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,.55,5),new THREE.MeshStandardMaterial({color:0x68472d}));
   trunk.position.set(x,.5,z);
-  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.38+hash(i,isl.seed,8)*.25,1.25,7),new THREE.MeshStandardMaterial({color:0x286a3b,roughness:1}));
+  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.42+hash(i,isl.seed,8)*.28,1.4,7),new THREE.MeshStandardMaterial({color:0x23633a,roughness:1}));
   leaf.position.set(x,1.2,z); leaf.castShadow=true; scene.add(trunk,leaf); worldObjects.push(trunk,leaf);
  }
  // label
@@ -130,12 +138,12 @@ function tick(){
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>gift(+b.dataset.add));
 document.getElementById('start').onclick=()=>{running=!running;document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';document.getElementById('status').textContent=running?'3D world is evolving…':'World paused.';if(running){timer=setInterval(tick,700);log('🔴 Real 3D island simulation started.')}else{clearInterval(timer);log('⏸ Simulation paused.')}};
 document.getElementById('event').onclick=()=>{const i=Math.floor(Math.random()*3),e=['🤝 opened a sea trade route','⚔️ border conflict started','🌾 discovered fertile land','🧭 explorers crossed the islands','🏰 expanded a settlement'];log(emojis[i]+' '+names[i]+' '+e[Math.floor(Math.random()*e.length)]+'.');render()};
-document.getElementById('reset').onclick=()=>{clearInterval(timer);running=false;clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));viewers=1284;camera.position.set(0,30,38);controls.target.set(0,0,0);spawn();document.getElementById('start').textContent='▶ Start';document.getElementById('status').textContent='World paused.';document.getElementById('events').innerHTML='';log('🌏 3D Philippine island world recreated.');render()};
+document.getElementById('reset').onclick=()=>{clearInterval(timer);running=false;clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));viewers=1284;camera.position.set(0,36,42);controls.target.set(0,1,0);spawn();document.getElementById('start').textContent='▶ Start';document.getElementById('status').textContent='World paused.';document.getElementById('events').innerHTML='';log('🌏 3D Philippine island world recreated.');render()};
 
 window.addEventListener('keydown',e=>{
  const k=e.key;
  if(['+','=','-','_','w','W','s','S','0'].includes(k)){e.preventDefault();
-  if(k==='0'){camera.position.set(0,30,38);controls.target.set(0,0,0)}
+  if(k==='0'){camera.position.set(0,36,42);controls.target.set(0,1,0)}
   else if(k==='+'||k==='='||k==='w'||k==='W')camera.position.lerp(controls.target,.08);
   else camera.position.lerp(controls.target,-.08);
   controls.update();
