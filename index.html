@@ -13,6 +13,7 @@ body{image-rendering:pixelated}
 #map.dragging{cursor:grabbing}
 .hud{position:absolute;inset:0;pointer-events:none;z-index:10}
 .pointer{pointer-events:auto}
+.zoomControls{pointer-events:auto}
 .brand{position:absolute;left:14px;top:12px;text-shadow:0 2px 0 #000,0 4px 10px #0008}
 .kicker{font-size:9px;font-weight:1000;letter-spacing:.16em;color:#bde7c0}
 .brand h1{margin:2px 0 0;font-size:26px;line-height:.95;font-weight:1000;letter-spacing:.02em}
@@ -43,6 +44,10 @@ select{width:100%;margin:7px 0}
 .minimap{position:absolute;right:296px;top:84px;width:132px;height:132px;padding:6px;background:#0a2329ed;border:1px solid #46666a;border-radius:6px;box-shadow:0 8px 20px #0008}
 #mini{width:100%;height:100%;display:block;image-rendering:pixelated}
 .day{position:absolute;left:50%;top:58px;transform:translateX(-50%);padding:4px 7px;background:#0b2a31df;border:1px solid #416b6c;border-radius:4px;font-size:8px;font-weight:1000}
+.zoomControls{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:3px}
+.zoomBtn{width:31px;height:31px;padding:0;border:1px solid #50716a;border-radius:4px;background:#09231feF;color:#f4f6e8;font-size:16px;line-height:29px;font-weight:1000;cursor:pointer;box-shadow:0 5px 14px #0008}
+.zoomBtn:hover{background:#1c4b3e;border-color:#b4d877}
+.fitBtn{width:38px;font-size:9px}
 .cards{position:absolute;left:12px;bottom:12px;display:grid;grid-template-columns:repeat(3,175px);gap:6px}
 .clan{padding:7px 8px;background:#0c241bee;border:1px solid #4a6250;border-radius:5px;box-shadow:0 7px 18px #0008}
 .clanHead{display:flex;justify-content:space-between;gap:6px;font-size:10px;font-weight:1000}
@@ -98,6 +103,11 @@ select{width:100%;margin:7px 0}
   <div class="live"><span class="liveDot"></span><span id="viewers">1,284</span> LIVE</div>
   <div class="sizeBadge">LARGE · 320 × 320 · 102,400 TILES · ZONE 5×5</div>
   <div class="day" id="dayUI">☀ DAY 124 · 12:30</div>
+  <div class="zoomControls pointer">
+    <button class="zoomBtn" id="zoomIn" aria-label="Zoom in">+</button>
+    <button class="zoomBtn" id="zoomOut" aria-label="Zoom out">−</button>
+    <button class="zoomBtn fitBtn" id="zoomReset" aria-label="Reset zoom">1:1</button>
+  </div>
   <div class="leftnav pointer">
     <div class="navtitle">CLANWORLD PH</div>
     <button class="navbtn active">🌍 MAP</button>
@@ -467,10 +477,22 @@ function screenToWorld(sx,sy){
   return [camera.x+(sx-innerWidth/2)/s,camera.y+(sy-innerHeight/2)/s];
 }
 function clampCamera(){
-  const halfW=innerWidth/(2*worldScale()),halfH=innerHeight/(2*worldScale());
-  camera.x=clamp(camera.x,halfW,320-halfW);
-  camera.y=clamp(camera.y,halfH,320-halfH);
+  const s=worldScale();
+  const halfW=Math.min(159,innerWidth/(2*s));
+  const halfH=Math.min(159,innerHeight/(2*s));
+  const minX=halfW,maxX=320-halfW,minY=halfH,maxY=320-halfH;
+  camera.x=minX<=maxX?clamp(camera.x,minX,maxX):160;
+  camera.y=minY<=maxY?clamp(camera.y,minY,maxY):160;
 }
+function setZoom(next,anchorX=innerWidth/2,anchorY=innerHeight/2){
+  const before=screenToWorld(anchorX,anchorY);
+  camera.zoom=clamp(next,.65,6);
+  const after=screenToWorld(anchorX,anchorY);
+  camera.x+=before[0]-after[0];
+  camera.y+=before[1]-after[1];
+  clampCamera();
+}
+
 function drawFrame(now){
   const t=now*.001;
   let ox=0,oy=0;
@@ -735,17 +757,21 @@ mapCanvas.addEventListener('pointerup',e=>{pointer.down=false;mapCanvas.classLis
 mapCanvas.addEventListener('pointercancel',()=>{pointer.down=false;mapCanvas.classList.remove('dragging')});
 mapCanvas.addEventListener('wheel',e=>{
   e.preventDefault();
-  const before=screenToWorld(e.clientX,e.clientY);
-  camera.zoom=clamp(camera.zoom*(e.deltaY<0?1.15:.87),.8,4.2);
-  const after=screenToWorld(e.clientX,e.clientY);
-  camera.x+=before[0]-after[0];camera.y+=before[1]-after[1];clampCamera();
+  setZoom(camera.zoom*(e.deltaY<0?1.15:.87),e.clientX,e.clientY);
 },{passive:false});
+
+document.getElementById('zoomIn').addEventListener('click',()=>setZoom(camera.zoom*1.25));
+document.getElementById('zoomOut').addEventListener('click',()=>setZoom(camera.zoom*.8));
+document.getElementById('zoomReset').addEventListener('click',()=>{
+  camera={x:160,y:160,zoom:1};
+  clampCamera();
+});
 
 window.addEventListener('keydown',e=>{
   if(['+','=','-','_','0'].includes(e.key)){
     e.preventDefault();
     if(e.key==='0'){camera={x:160,y:160,zoom:1}}
-    else camera.zoom=clamp(camera.zoom*(e.key==='+'||e.key==='='?1.15:.87),.8,4.2);
+    else setZoom(camera.zoom*(e.key==='+'||e.key==='='?1.15:.87));
     clampCamera();
   }
 });
