@@ -43,7 +43,7 @@ renderer.outputColorSpace=THREE.SRGBColorSpace;
 
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x071b24); scene.fog=new THREE.Fog(0x071b24,48,155);
 const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,300); camera.position.set(0,36,42);
-const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.055; controls.minDistance=10; controls.maxDistance=80; controls.maxPolarAngle=Math.PI*.46; controls.minPolarAngle=.35; controls.target.set(0,0,0);
+const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.055; controls.minDistance=10; controls.maxDistance=80; controls.maxPolarAngle=Math.PI*.46; controls.minPolarAngle=.35; controls.target.set(0,1,0);
 
 scene.add(new THREE.HemisphereLight(0xbbeeff,0x163d2b,2.3));
 const fill=new THREE.DirectionalLight(0x9edcff,1.1); fill.position.set(28,18,-25); scene.add(fill);
@@ -86,19 +86,25 @@ function makeIsland(isl){
  // coastline foam
  const coast=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shape.map(p=>new THREE.Vector3(p.x,.42,p.y))),new THREE.LineBasicMaterial({color:0xc8f2d2,transparent:true,opacity:.55}));
  scene.add(coast); worldObjects.push(coast);
+ // central volcano and volcanic cone
+ const volcanoHeight=5.5+hash(isl.seed,2,9)*3.5;
+ const volcano=new THREE.Mesh(new THREE.ConeGeometry(Math.min(isl.w,isl.d)*.19,volcanoHeight,18),new THREE.MeshStandardMaterial({color:0x39463e,roughness:1}));
+ volcano.position.set(isl.x+(hash(isl.seed,4,10)-.5)*isl.w*.18,volcanoHeight/2,isl.z+(hash(isl.seed,5,11)-.5)*isl.d*.18); volcano.castShadow=true; scene.add(volcano); worldObjects.push(volcano);
+ const crater=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(isl.w,isl.d)*.075,Math.min(isl.w,isl.d)*.11,.35,18),new THREE.MeshStandardMaterial({color:0x211d18,roughness:1}));
+ crater.position.set(volcano.position.x,volcanoHeight+.05,volcano.position.z); scene.add(crater); worldObjects.push(crater);
  // mountains
- for(let i=0;i<Math.max(3,Math.floor(isl.w/1.8));i++){
+ for(let i=0;i<Math.max(6,Math.floor(isl.w*1.25));i++){
   const x=isl.x+(hash(i,isl.seed,2)-.5)*isl.w*.62,z=isl.z+(hash(i,isl.seed,3)-.5)*isl.d*.55;
-  const h=1.7+hash(i,isl.seed,4)*3.6;
+  const h=2.0+hash(i,isl.seed,4)*5.0;
   const mt=new THREE.Mesh(new THREE.ConeGeometry(.65+hash(i,isl.seed,5)*.65,h,7),new THREE.MeshStandardMaterial({color:0x4e6257,roughness:1}));
   mt.position.set(x,h/2,z); mt.castShadow=true; scene.add(mt); worldObjects.push(mt);
  }
  // trees
- for(let i=0;i<Math.floor(isl.w*2.2);i++){
+ for(let i=0;i<Math.floor(isl.w*4.8);i++){
   const x=isl.x+(hash(i,isl.seed,6)-.5)*isl.w*.7,z=isl.z+(hash(i,isl.seed,7)-.5)*isl.d*.65;
   const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,.55,5),new THREE.MeshStandardMaterial({color:0x68472d}));
   trunk.position.set(x,.5,z);
-  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.42+hash(i,isl.seed,8)*.28,1.4,7),new THREE.MeshStandardMaterial({color:0x23633a,roughness:1}));
+  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.5+hash(i,isl.seed,8)*.35,1.65,7),new THREE.MeshStandardMaterial({color:0x23633a,roughness:1}));
   leaf.position.set(x,1.2,z); leaf.castShadow=true; scene.add(trunk,leaf); worldObjects.push(trunk,leaf);
  }
  // label
@@ -109,12 +115,12 @@ function clearWorld(){worldObjects.forEach(o=>scene.remove(o));worldObjects=[];u
 function spawn(){
  clearWorld(); islands.forEach(makeIsland);
  islands.forEach((isl,ii)=>{
-  for(let j=0;j<3;j++){
+  for(let j=0;j<5;j++){
    const u=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8),new THREE.MeshStandardMaterial({color:colors[isl.clan],emissive:colors[isl.clan],emissiveIntensity:.12}));
    u.position.set(isl.x+(hash(j,isl.seed,11)-.5)*isl.w*.45,1.5,isl.z+(hash(j,isl.seed,12)-.5)*isl.d*.42);
    u.castShadow=true;u.userData={island:ii,clan:isl.clan,tx:u.position.x,tz:u.position.z};scene.add(u);units.push(u);worldObjects.push(u);
   }
-  for(let j=0;j<Math.max(1,Math.floor(isl.w/3));j++){
+  for(let j=0;j<Math.max(2,Math.floor(isl.w/1.8));j++){
    const hut=new THREE.Group();
    const body=new THREE.Mesh(new THREE.BoxGeometry(.7,.55,.7),new THREE.MeshStandardMaterial({color:0xd7b26b}));
    const roof=new THREE.Mesh(new THREE.ConeGeometry(.55,.55,4),new THREE.MeshStandardMaterial({color:0x874e36}));roof.rotation.y=Math.PI/4;roof.position.y=.55;
