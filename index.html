@@ -59,6 +59,7 @@ select{width:100%;margin:8px 0}
 .hint{position:absolute;z-index:10;left:50%;bottom:20px;transform:translateX(-50%);padding:7px 11px;border-radius:6px;background:#102019cc;border:1px solid #ffffff20;color:#d6e3d2;font-size:10px;font-weight:700;pointer-events:none}
 .credit{position:absolute;right:20px;bottom:18px;font-size:10px;font-weight:900;letter-spacing:.12em;color:#eaf4df;text-shadow:0 2px 7px #0009;opacity:.85;pointer-events:none}
 .credit span{color:#cfe98a}
+.pixelBadge{position:absolute;left:18px;bottom:18px;font-size:9px;font-weight:900;letter-spacing:.1em;color:#dcebcf;background:#102019dd;border:1px solid #547052;padding:6px 8px;border-radius:4px;box-shadow:0 5px 15px #0008}
 @media(max-width:900px){
  .side{width:250px;right:9px;top:70px;max-height:48vh}
  .cards{left:9px;bottom:9px;grid-template-columns:repeat(2,180px)}
@@ -117,6 +118,7 @@ select{width:100%;margin:8px 0}
  <span class="leg">⌂ Villages</span>
  <span class="leg">● Units</span>
 </div>
+<div class="pixelBadge">PIXEL WORLD · 16×16 / 32×32 STYLE</div>
 <div class="credit">BUILT BY <span>TUBAL HUB</span></div>
 </div>
 
@@ -158,8 +160,17 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const canvas=document.getElementById('map');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight,false);
+renderer.setPixelRatio(1);
+const PIXEL_SCALE=2;
+function setPixelViewport(){
+ const pw=Math.max(320,Math.floor(innerWidth/PIXEL_SCALE));
+ const ph=Math.max(256,Math.floor(innerHeight/PIXEL_SCALE));
+ renderer.setSize(pw,ph,false);
+ renderer.domElement.style.width='100%';
+ renderer.domElement.style.height='100%';
+ renderer.domElement.style.imageRendering='pixelated';
+}
+setPixelViewport();
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -170,7 +181,7 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x0a3a4a);
 scene.fog=new THREE.Fog(0x0a3a4a,70,180);
 
-const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,260);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,260);
 camera.position.set(0,50,43);
 
 const controls=new OrbitControls(camera,renderer.domElement);
@@ -215,16 +226,17 @@ const islands=[
 ];
 
 function terrainTexture(base,accent1,accent2){
- const c=document.createElement('canvas');c.width=256;c.height=256;
- const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,256,256);
- for(let i=0;i<520;i++){
-  const px=Math.random()*256,py=Math.random()*256,r=1+Math.random()*5;
-  x.globalAlpha=.10+Math.random()*.22;
+ const c=document.createElement('canvas');c.width=32;c.height=32;
+ const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.fillStyle=base;x.fillRect(0,0,32,32);
+ for(let i=0;i<150;i++){
+  const px=Math.floor(Math.random()*32),py=Math.floor(Math.random()*32);
+  const s=Math.random()>.8?2:1;
+  x.globalAlpha=.35+Math.random()*.45;
   x.fillStyle=Math.random()>.5?accent1:accent2;
-  x.beginPath();x.arc(px,py,r,0,Math.PI*2);x.fill();
+  x.fillRect(px,py,s,s);
  }
  x.globalAlpha=1;
- const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestMipmapNearestFilter;t.generateMipmaps=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;
  return t;
 }
 const texGrass=terrainTexture('#8fb85f','#b6cf75','#668e4d');
@@ -386,11 +398,11 @@ function addRoad(isl){
 }
 function addTree(x,z,s=1,kind=0){
  const g=new THREE.Group();
- const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.07*s,.11*s,.48*s,5),new THREE.MeshStandardMaterial({color:0x65462c,roughness:1}));
+ const trunk=new THREE.Mesh(new THREE.BoxGeometry(.14*s,.48*s,.14*s),new THREE.MeshStandardMaterial({color:0x65462c,roughness:1}));
  trunk.position.y=.62*s;
  const leafMat=new THREE.MeshStandardMaterial({color:kind?0x2f7042:0x3f824b,roughness:1});
- const a=new THREE.Mesh(new THREE.ConeGeometry(.48*s,.92*s,7),leafMat);a.position.y=1.12*s;
- const b=new THREE.Mesh(new THREE.ConeGeometry(.34*s,.72*s,7),leafMat);b.position.y=1.55*s;
+ const a=new THREE.Mesh(new THREE.ConeGeometry(.48*s,.92*s,6),leafMat);a.position.y=1.12*s;
+ const b=new THREE.Mesh(new THREE.ConeGeometry(.34*s,.72*s,6),leafMat);b.position.y=1.55*s;
  g.add(trunk,a,b);g.position.set(x,0,z);g.rotation.y=hash(x,z,3)*Math.PI;
  g.castShadow=true;scene.add(g);worldObjects.push(g);animated.push({type:'tree',object:g,phase:hash(x,z,91)*6.28,amp:.025+hash(x,z,92)*.025});return g;
 }
@@ -533,8 +545,8 @@ function spawn(){
  islands.forEach((isl,ii)=>{
   for(let j=0;j<5;j++){
    const g=new THREE.Group();
-   const body=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),new THREE.MeshStandardMaterial({color:colors[isl.clan],emissive:colors[isl.clan],emissiveIntensity:.1}));
-   const head=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),new THREE.MeshStandardMaterial({color:0xffdfb4}));
+   const body=new THREE.Mesh(new THREE.BoxGeometry(.30,.30,.22),new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:1}));
+   const head=new THREE.Mesh(new THREE.BoxGeometry(.17,.17,.17),new THREE.MeshStandardMaterial({color:0xffc98f,roughness:1}));
    head.position.y=.28;
    g.add(body,head);
    g.position.set(isl.x+(hash(j,isl.seed,60)-.5)*isl.w*.4,1.6,isl.z+(hash(j,isl.seed,61)-.5)*isl.d*.38);
@@ -663,7 +675,7 @@ window.addEventListener('keydown',e=>{
  }
 });
 window.addEventListener('resize',()=>{
- camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();setPixelViewport();
 });
 function drawMini(){
  const c=document.getElementById('mini'),ctx=c.getContext('2d');
