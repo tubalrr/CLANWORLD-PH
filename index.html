@@ -209,6 +209,12 @@ layer.width=W;layer.height=H;
 const lctx=layer.getContext('2d',{alpha:false});
 lctx.imageSmoothingEnabled=false;
 
+const ISO_W=1024,ISO_H=512;
+const isoLayer=document.createElement('canvas');
+isoLayer.width=ISO_W;isoLayer.height=ISO_H;
+const ilctx=isoLayer.getContext('2d',{alpha:false});
+ilctx.imageSmoothingEnabled=false;
+
 const mini=document.getElementById('mini');
 const mctx=mini.getContext('2d');
 mctx.imageSmoothingEnabled=false;
@@ -446,14 +452,12 @@ function rebuildLayer(){
   lctx.fillStyle=C.ocean;lctx.fillRect(0,0,W,H);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)drawTile(x,y,terrain[idx(x,y)]);
 
-  // Reef rings around fishing grounds.
   fishTiles.forEach(([x,y])=>{
     lctx.fillStyle='#47e1d7';
     lctx.fillRect(x-1,y,1,1);lctx.fillRect(x+1,y,1,1);
     lctx.fillRect(x,y-1,1,1);lctx.fillRect(x,y+1,1,1);
   });
 
-  // Pixel roads.
   const roads=[
     [[91,83],[113,87],[136,83],[155,96]],
     [[140,149],[156,157],[177,157],[193,169]],
@@ -461,7 +465,6 @@ function rebuildLayer(){
   ];
   roads.forEach(path=>{for(let i=0;i<path.length-1;i++)drawPixelLine(path[i],path[i+1],C.road)});
 
-  // Coastline pixel glint.
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const k=idx(x,y);
     if(terrain[k]<2)continue;
@@ -470,6 +473,23 @@ function rebuildLayer(){
         lctx.fillStyle='#f7f6de';lctx.fillRect(x,y,1,1);break;
       }
     }
+  }
+
+  // Pre-rasterize 320×320 logical tiles into a 1024×512 isometric canvas.
+  ilctx.fillStyle=C.ocean;ilctx.fillRect(0,0,ISO_W,ISO_H);
+  const hw=ISO_TILE_X/2,hh=ISO_TILE_Y/2;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const c=terrain[idx(x,y)];
+    const color=c===0?C.ocean:c===1?C.shallow:c===2?C.beach:c===3?C.grass:c===4?C.rice:c===5?C.forest:c===6?C.mountain:c===7?C.snow:c===8?C.river:C.road;
+    const sx=512+(x-y)*hw, sy=(x+y)*hh;
+    ilctx.fillStyle=color;
+    ilctx.beginPath();
+    ilctx.moveTo(sx,sy-hh+0.5);
+    ilctx.lineTo(sx+hw,sy+0.5);
+    ilctx.lineTo(sx,sy+hh+0.5);
+    ilctx.lineTo(sx-hw,sy+0.5);
+    ilctx.closePath();
+    ilctx.fill();
   }
 }
 
@@ -619,8 +639,15 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
     drawIsoPoly(target,is.poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*view.zoom),w,h,scale);
   });
 
-  // Flat pixel world.
-  target.drawImage(layer,0,0);
+  // Projected 320×320 world — real tile state rendered as a 45° isometric map.
+  const worldScale=scale*view.zoom;
+  target.drawImage(
+    isoLayer,
+    w/2+view.x-ISO_W*worldScale/2,
+    h/2+view.y-ISO_H*worldScale/2,
+    ISO_W*worldScale,
+    ISO_H*worldScale
+  );
 
   // White glow/outline over each island edge.
   target.save();
