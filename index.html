@@ -109,7 +109,7 @@ select{width:100%;margin:7px 0}
     </div>
 
     <div class="live"><span class="liveDot"></span><span id="viewers">1,284</span> VIEWERS</div>
-    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5 · ISOMETRIC 2D</div>
+    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5 · ISOMETRIC 2D · REAL MAP DATA</div>
     <div class="day" id="dayUI">☀ DAY 124 · 12:30</div>
 
     <div class="leftnav pointer">
@@ -146,7 +146,7 @@ select{width:100%;margin:7px 0}
       </section>
 
       <section class="panel">
-        <div class="panelTitle"><span>World Controls</span><span class="badge">1000+ UNITS</span></div>
+        <div class="panelTitle"><span>World Controls</span><span class="badge">LIVE DATA ONLY</span></div>
         <div class="actions">
           <button class="btn" id="start">▶ Start</button>
           <button class="btn" id="event">⚡ Event</button>
@@ -199,7 +199,7 @@ select{width:100%;margin:7px 0}
    Isometric 2D strategy presentation with pixel units.
    Canvas only — no external images.
 */
-const W=320,H=320,ZONE=5,UNIT_COUNT=1100;
+const W=320,H=320,ZONE=5;
 const mapCanvas=document.getElementById('map');
 const ctx=mapCanvas.getContext('2d',{alpha:false});
 ctx.imageSmoothingEnabled=false;
@@ -225,20 +225,15 @@ const C={
   ship:'#c6d0cb',shipDark:'#46565b',container:['#d96f4f','#5ca7c7','#d5a947','#7f78c8']
 };
 
-const islands=[
-  {id:'mindanao',name:'MINDANAO',clan:2,color:C.mindanao,
-   poly:[[45,36],[64,25],[91,21],[121,25],[145,38],[163,53],[184,59],[197,75],[191,92],[174,104],[160,117],[139,121],[120,113],[103,120],[85,112],[66,116],[52,104],[39,89],[35,67]],seed:11,label:[112,74]},
-  {id:'bohol',name:'BOHOL',clan:1,color:C.visayas,
-   poly:[[143,132],[158,128],[171,133],[178,143],[175,153],[164,160],[149,157],[141,149]],seed:21,label:[159,145]},
-  {id:'samar-leyte',name:'SAMAR-LEYTE',clan:1,color:C.visayas,
-   poly:[[43,184],[56,175],[70,178],[82,188],[91,199],[96,214],[91,229],[83,244],[70,253],[58,247],[50,235],[44,220],[39,204]],seed:31,label:[66,213]},
-  {id:'panay-negros-cebu',name:'PANAY-NEGROS-CEBU',clan:1,color:C.visayas2,
-   poly:[[105,178],[118,171],[133,176],[144,184],[156,181],[169,184],[182,194],[193,206],[207,210],[221,221],[218,235],[205,246],[190,242],[176,248],[160,241],[145,248],[132,239],[116,242],[104,231],[96,216],[99,198]],seed:41,label:[159,216]},
-  {id:'mindoro',name:'MINDORO',clan:0,color:C.mindoro,
-   poly:[[244,102],[258,91],[274,95],[288,109],[292,127],[286,144],[290,160],[282,177],[269,188],[253,182],[243,168],[239,150],[242,131]],seed:51,label:[267,142]},
-  {id:'luzon-partial',name:'LUZON',clan:0,color:C.luzon,
-   poly:[[89,-10],[122,-5],[150,7],[173,18],[195,14],[219,5],[247,12],[270,20],[284,36],[280,53],[260,61],[238,53],[216,59],[191,48],[169,52],[146,43],[128,32],[106,24],[90,17]],seed:61,label:[230,27],partial:true}
-];
+let REAL={regions:[]};
+let islands=[];
+
+function buildIslandsFromReal(){
+  islands=REAL.regions.map(r=>({
+    id:r.id,name:r.name,clan:r.clan,color:r.color,polys:r.polys,partial:!!r.partial,seed:r.id.length,
+    label:r.polys.flat().reduce((a,p)=>[a[0]+p[0],a[1]+p[1]],[0,0]).map((v,i)=>v/Math.max(1,r.polys.flat().length))
+  }));
+}
 
 const terrain=new Uint8Array(W*H);
 // 0 ocean, 1 shallow, 2 beach, 3 grass, 4 rice, 5 forest, 6 mountain, 7 snow, 8 river, 9 road
@@ -247,7 +242,7 @@ const owner=new Int8Array(W*H);owner.fill(-1);
 let mountains=[],trees=[],villages=[],goldTiles=[],fishTiles=[],units=[];
 let ports=[],ships=[],containers=[];
 let clans=[];
-let viewers=1284,running=false,timer=null;
+let viewers=null,running=false,timer=null;
 let day=12.5,dayTick=0;
 let disaster=null,shake=0;
 let view={zoom:1,x:0,y:0};
@@ -297,9 +292,9 @@ function nearestLand(x,y,clan=-1){
 function initWorld(){
   terrain.fill(0);owner.fill(-1);
   mountains=[];trees=[];villages=[];goldTiles=[];fishTiles=[];units=[];ports=[];ships=[];containers=[];
-  clans=['Luzon','Visayas','Mindanao'].map(name=>({name,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
+  clans=['Luzon','Visayas','Mindanao'].map(name=>({name,members:0,points:0,villages:0,territory:0,leader:'No Leader'}));
 
-  islands.forEach(i=>fillPoly(i.poly,i.clan));
+  islands.forEach(i=>i.polys.forEach(poly=>fillPoly(poly,i.clan)));
 
   // Shallow-water belt and beaches.
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -322,7 +317,7 @@ function initWorld(){
 
   // Hard-edged flat biome variation.
   islands.forEach(is=>{
-    const xs=is.poly.map(p=>p[0]),ys=is.poly.map(p=>p[1]);
+    const allPts=is.polys.flat(); const xs=allPts.map(p=>p[0]),ys=allPts.map(p=>p[1]);
     const x0=Math.max(0,Math.floor(Math.min(...xs))),x1=Math.min(319,Math.ceil(Math.max(...xs)));
     const y0=Math.max(0,Math.floor(Math.min(...ys))),y1=Math.min(319,Math.ceil(Math.max(...ys)));
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
@@ -425,25 +420,7 @@ function initWorld(){
   ];
   shipPaths.forEach((path,i)=>ships.push({path,phase:i*.13,speed:.008+i*.0015}));
 
-  // 1100 tiny chibi people: one logical tile = one person.
-  for(let c=0;c<3;c++){
-    const owned=islands.filter(i=>i.clan===c&&!i.partial);
-    for(let n=0;n<Math.floor(UNIT_COUNT/3);n++){
-      const is=owned[n%owned.length];
-      const minX=Math.max(0,Math.floor(Math.min(...is.poly.map(p=>p[0]))));
-      const maxX=Math.min(319,Math.ceil(Math.max(...is.poly.map(p=>p[0]))));
-      const minY=Math.max(0,Math.floor(Math.min(...is.poly.map(p=>p[1]))));
-      const maxY=Math.min(319,Math.ceil(Math.max(...is.poly.map(p=>p[1]))));
-      let x=minX,y=minY;
-      for(let t=0;t<80;t++){
-        const xx=Math.floor(minX+hash(n,t,100+c)*(maxX-minX+1));
-        const yy=Math.floor(minY+hash(n,t,160+c)*(maxY-minY+1));
-        if(inMap(xx,yy)&&owner[idx(xx,yy)]===c&&terrain[idx(xx,yy)]>=2){x=xx;y=yy;break}
-      }
-      units.push({x,y,clan:c,phase:hash(n,c,300)*6.28});
-    }
-  }
-
+  // No fabricated population. Units are created only by gameplay/simulation actions.
   rebuildLayer();drawMini();updateUI();
 }
 
@@ -737,12 +714,19 @@ function resize(){
 }
 function updateUI(){
   const members=clans.reduce((a,c)=>a+c.members,0);
-  document.getElementById('goldUI').textContent=(2450+clans.reduce((a,c)=>a+c.points,0)).toLocaleString();
-  document.getElementById('woodUI').textContent=(5320+clans.reduce((a,c)=>a+c.villages*8,0)).toLocaleString();
-  document.getElementById('foodUI').textContent=(8760+members*2).toLocaleString();
-  document.getElementById('fishUI').textContent=(4210+members).toLocaleString();
-  document.getElementById('popUI').textContent=(12540+members).toLocaleString();
-  document.getElementById('viewers').textContent=viewers.toLocaleString();
+  const stats={
+    gold:goldTiles.length,
+    wood:trees.length,
+    food:Array.from(terrain).filter(v=>v===4).length,
+    fish:fishTiles.length,
+    population:units.length
+  };
+  document.getElementById('goldUI').textContent=stats.gold.toLocaleString();
+  document.getElementById('woodUI').textContent=stats.wood.toLocaleString();
+  document.getElementById('foodUI').textContent=stats.food.toLocaleString();
+  document.getElementById('fishUI').textContent=stats.fish.toLocaleString();
+  document.getElementById('popUI').textContent=stats.population.toLocaleString();
+  document.getElementById('viewers').textContent=viewers===null?'—':viewers.toLocaleString();
 
   const daylight=Math.max(0,Math.sin((day-6)/12*Math.PI));
   document.getElementById('dayUI').textContent=(daylight>.35?'☀ DAY ':'🌙 NIGHT ')+'124 · '+String(Math.floor(day)).padStart(2,'0')+':'+String(Math.floor((day%1)*60)).padStart(2,'0');
@@ -793,16 +777,28 @@ function triggerDisaster(){
 }
 function resetWorld(){
   clearInterval(timer);running=false;timer=null;
-  view={zoom:1,x:0,y:0};day=12.5;viewers=1284;disaster=null;shake=0;
+  view={zoom:1,x:0,y:0};day=12.5;viewers=null;disaster=null;shake=0;
   document.getElementById('start').textContent='▶ Start';
   document.getElementById('status').textContent='World paused.';
   document.getElementById('events').innerHTML='';
   initWorld();
   log('🌏 Separate Philippine islands created: Luzon, Visayas and Mindanao');
   log('🗺 Isometric 2D 320×320 LARGE map generated — 102,400 tiles.');
-  log('🚢 Fake ports, moving ships and stacked containers are ready.');
-  log('👥 1,100 pixel villagers spawned — one tile = one person.');
+  log('🚢 Port, ship and container objects are game-state entities.');
+  log('👥 Population starts at 0 — no fabricated people count.');
   alertWorld('🌏 WORLD RESET');updateUI();
+}
+function spawnSimulationUnits(count){
+  units=[];
+  const eligible=islands.filter(i=>!i.partial);
+  for(let i=0;i<count;i++){
+    const is=eligible[i%eligible.length];
+    const polys=is.polys;
+    const poly=polys[i%polys.length];
+    const p=poly[i%poly.length];
+    const q=nearestLand(p[0],p[1],is.clan);
+    units.push({x:q[0],y:q[1],clan:is.clan,phase:hash(i,is.clan,300)*6.28});
+  }
 }
 function stepUnits(){
   for(const u of units){
@@ -817,7 +813,7 @@ function stepUnits(){
   }
 }
 function tick(){
-  viewers=clamp(viewers+Math.floor(Math.random()*13)-6,100,9999);
+  // Viewer count stays empty until a real live-viewer source/API is connected.
   day=(day+.02)%24;
   stepUnits();
   if(Math.random()<.035){
@@ -840,7 +836,7 @@ function exportJSON(){
     game:'CLANWORLD PH',version:'1.0',
     map:{width:W,height:H,tiles:W*H,zone:'5x5',tileFormula:'zone×64',projection:'isometric-2D'},
     style:'Original fake pixel + isometric low-poly 2D strategy simulation',
-    islands:islands.map(i=>({id:i.id,name:i.name,clan:i.clan,color:i.color,poly:i.poly,partial:!!i.partial})),
+    islands:islands.map(i=>({id:i.id,name:i.name,clan:i.clan,color:i.color,polys:i.polys,partial:!!i.partial})),
     terrain:Array.from(terrain),owner:Array.from(owner),
     villages,ports,ships,containers,
     villagers:units.map(u=>({x:u.x,y:u.y,clan:u.clan})),
@@ -865,7 +861,13 @@ document.getElementById('start').addEventListener('click',()=>{
   running=!running;
   document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';
   document.getElementById('status').textContent=running?'World is evolving…':'World paused.';
-  if(running){timer=setInterval(tick,16);log('🔴 Simulation started — one tile-step per update.');alertWorld('🔴 SIMULATION LIVE')}
+  if(running){
+    if(units.length===0)spawnSimulationUnits(1000);
+    updateUI();
+    timer=setInterval(tick,16);
+    log('🔴 Simulation started — game population is now generated from the current world state.');
+    alertWorld('🔴 SIMULATION LIVE')
+  }
   else{clearInterval(timer);timer=null;log('⏸ Simulation paused.')}
 });
 document.getElementById('event').addEventListener('click',randomEvent);
@@ -914,13 +916,24 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('resize',resize);
 
-initWorld();
-log('🌏 Separate Philippine islands created: Luzon, Visayas and Mindanao');
-log('🗺 Isometric 2D map loaded — 320×320 LARGE / 102,400 tiles.');
-log('🚢 Fake ports, ships and container stacks are visible.');
-log('👥 1,100 pixel villagers ready.');
-resize();
-
+async function boot(){
+  try{
+    const response=await fetch('./data/philippines-real-geometry.json',{cache:'no-store'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    REAL=await response.json();
+    buildIslandsFromReal();
+    initWorld();
+    log('🌏 REAL Philippines coastline geometry loaded.');
+    log('🗺 320×320 LARGE map — 102,400 logical tiles.');
+    log('🚢 Ports, ships and container stacks are game entities, not real-world counts.');
+    log('👥 Population starts at 0 — no fabricated people count.');
+    resize();
+  }catch(err){
+    console.error(err);
+    document.getElementById('status').textContent='Real map data failed to load.';
+    log('❌ Real map geometry failed to load.');
+  }
+}
 function animate(now){requestAnimationFrame(animate);drawFrame(now)}
 requestAnimationFrame(animate);
 </script>
