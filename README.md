@@ -1,2 +1,2 @@
 # CLANWORLD-PH
-“Build. Unite. Conquer.”
+Build. Unite. Conquer.
