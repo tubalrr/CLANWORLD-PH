@@ -20,5 +20,102 @@ Error generating stack: `+o.message+`
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   
+<script>
+(function(){
+  'use strict';
+
+  // CLANWORLD PH — LIVE INTERACTION BRIDGE
+  // Keeps the uploaded working build's React handlers intact, while explicitly
+  // enabling pointer/touch interaction for an embedded live/web source.
+  function install(){
+    document.documentElement.style.overflow='hidden';
+    document.body.style.overflow='hidden';
+
+    const root=document.getElementById('root');
+    if(root){
+      root.style.pointerEvents='auto';
+      root.style.userSelect='none';
+      root.style.webkitUserSelect='none';
+    }
+
+    const canvas=document.querySelector('#root canvas');
+    if(canvas && !canvas.dataset.clanworldLiveBridge){
+      canvas.dataset.clanworldLiveBridge='1';
+      canvas.style.pointerEvents='auto';
+      canvas.style.touchAction='none';
+      canvas.style.cursor='grab';
+      canvas.setAttribute('aria-label','CLANWORLD PH interactive map');
+
+      let downX=0,downY=0,dragging=false;
+      canvas.addEventListener('pointerdown',function(e){
+        if(e.button!==undefined && e.button!==0)return;
+        downX=e.clientX;downY=e.clientY;dragging=false;
+        canvas.style.cursor='grabbing';
+      },{passive:true});
+
+      canvas.addEventListener('pointermove',function(e){
+        if(Math.abs(e.clientX-downX)>4 || Math.abs(e.clientY-downY)>4)dragging=true;
+      },{passive:true});
+
+      canvas.addEventListener('pointerup',function(e){
+        canvas.style.cursor='grab';
+        // A real click on the map produces a small interaction marker.
+        if(!dragging){
+          const rect=canvas.getBoundingClientRect();
+          const x=Math.round(e.clientX-rect.left);
+          const y=Math.round(e.clientY-rect.top);
+          showInteraction(x,y);
+        }
+      },{passive:true});
+      
+      canvas.addEventListener('contextmenu',function(e){e.preventDefault();},{passive:false});
+    }
+
+    // Make every visible button/select explicitly clickable/touchable.
+    document.querySelectorAll('#root button,#root select').forEach(function(el){
+      el.style.pointerEvents='auto';
+      el.style.touchAction='manipulation';
+      el.style.position=el.style.position||'relative';
+      el.style.zIndex='50';
+    });
+  }
+
+  function showInteraction(x,y){
+    let badge=document.getElementById('cw-live-interaction');
+    if(!badge){
+      badge=document.createElement('div');
+      badge.id='cw-live-interaction';
+      badge.style.cssText=[
+        'position:fixed','left:50%','top:50%','transform:translate(-50%,-50%)',
+        'z-index:99999','padding:7px 10px','border:1px solid rgba(52,211,153,.5)',
+        'border-radius:6px','background:rgba(6,20,27,.88)','color:#d1fae5',
+        'font:700 10px ui-monospace,monospace','pointer-events:none',
+        'box-shadow:0 0 18px rgba(52,211,153,.22)'
+      ].join(';');
+      document.body.appendChild(badge);
+    }
+    badge.textContent='MAP CLICK · '+x+'×'+y;
+    badge.style.opacity='1';
+    clearTimeout(showInteraction.timer);
+    showInteraction.timer=setTimeout(function(){badge.style.opacity='0'},700);
+  }
+
+  // React renders asynchronously, so install once now and again after mount.
+  install();
+  const mo=new MutationObserver(install);
+  mo.observe(document.getElementById('root')||document.body,{subtree:true,childList:true});
+  setTimeout(install,250);
+  setTimeout(install,1000);
+
+  // Keyboard control remains available in the embedded source.
+  document.addEventListener('keydown',function(e){
+    if(['w','W','s','S','+','=','-','_','0'].includes(e.key)){
+      // Let the existing game handler receive it; don't consume it here.
+    }
+  },true);
+
+  window.__CLANWORLD_PH_LIVE_INTERACTIVE__=true;
+})();
+</script>
 </body>
 </html>
