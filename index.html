@@ -109,7 +109,7 @@ select{width:100%;margin:7px 0}
     </div>
 
     <div class="live"><span class="liveDot"></span><span id="viewers">1,284</span> VIEWERS</div>
-    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5 · ISOMETRIC 2D · REAL MAP DATA</div>
+    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5 · WIDE PH MAP · REAL MAP DATA</div>
     <div class="day" id="dayUI">☀ DAY 124 · 12:30</div>
 
     <div class="leftnav pointer">
@@ -175,7 +175,7 @@ select{width:100%;margin:7px 0}
     </div>
     <div id="zoomReadout" style="position:absolute;right:122px;bottom:51px;padding:5px 7px;background:#09231feF;border:1px solid #50716a;border-radius:4px;font-size:8px;font-weight:1000;color:#e8f3e5">100%</div>
 
-    <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · 45° ISOMETRIC · 320×320</div>
+    <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · WIDE PH MAP · 320×320</div>
 
     <div class="legend">
       <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
@@ -209,6 +209,12 @@ const layer=document.createElement('canvas');
 layer.width=W;layer.height=H;
 const lctx=layer.getContext('2d',{alpha:false});
 lctx.imageSmoothingEnabled=false;
+
+const REAL_W=1200,REAL_H=800;
+const realLayer=document.createElement('canvas');
+realLayer.width=REAL_W;realLayer.height=REAL_H;
+const rctx=realLayer.getContext('2d',{alpha:false});
+rctx.imageSmoothingEnabled=false;
 
 const ISO_W=1024,ISO_H=512;
 const isoLayer=document.createElement('canvas');
@@ -299,6 +305,136 @@ function nearestLand(x,y,clan=-1){
   return [Math.round(clamp(x,0,319)),Math.round(clamp(y,0,319))];
 }
 
+function noise2(x,y){
+  const s=Math.sin(x*12.9898+y*78.233)*43758.5453;
+  return s-Math.floor(s);
+}
+function smoothNoise(x,y){
+  const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0;
+  const a=noise2(x0,y0),b=noise2(x0+1,y0),c=noise2(x0,y0+1),d=noise2(x0+1,y0+1);
+  const sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
+  return (a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy;
+}
+function fbm(x,y){
+  let v=0,a=.62,f=1;
+  for(let i=0;i<4;i++){v+=smoothNoise(x*f,y*f)*a;a*=.5;f*=2.08}
+  return v;
+}
+function pathFromPoly(poly){
+  const p=new Path2D();
+  p.moveTo(poly[0][0]/W*REAL_W,poly[0][1]/H*REAL_H);
+  for(let i=1;i<poly.length;i++)p.lineTo(poly[i][0]/W*REAL_W,poly[i][1]/H*REAL_H);
+  p.closePath();return p;
+}
+function buildWideRealMap(){
+  // Wide 1200×800 terrain presentation inspired by the uploaded realistic-map artifact.
+  rctx.fillStyle='#061a33';rctx.fillRect(0,0,REAL_W,REAL_H);
+
+  // Layered ocean tones without external images.
+  for(let y=0;y<REAL_H;y+=4){
+    const t=y/REAL_H;
+    rctx.fillStyle='rgb('+Math.round(6+10*t)+','+Math.round(28+28*t)+','+Math.round(55+48*t)+')';
+    rctx.fillRect(0,y,REAL_W,4);
+  }
+
+  // Real coastline polygons, enlarged into a wide presentation.
+  islands.forEach((is,ii)=>{
+    is.polys.forEach(poly=>{
+      const p=pathFromPoly(poly);
+
+      rctx.save();
+      rctx.translate(5,9);
+      rctx.fillStyle='rgba(0,8,15,.82)';
+      rctx.fill(p);
+      rctx.restore();
+
+      rctx.save();
+      rctx.fillStyle=is.color;
+      rctx.fill(p);
+      rctx.restore();
+
+      // Generated visual terrain only — not claimed geographic measurements.
+      rctx.save();
+      rctx.clip(p);
+      const img=rctx.createImageData(REAL_W,REAL_H);
+      const d=img.data;
+      for(let y=0;y<REAL_H;y+=2){
+        for(let x=0;x<REAL_W;x+=2){
+          const n=fbm(x*.0065+ii*.7,y*.0065+ii*.3);
+          const ridge=fbm(x*.018,y*.018)*.35;
+          const h=Math.min(1,n*.76+ridge);
+          let rr,gg,bb;
+          if(h<.28){rr=77;gg=142;bb=76}
+          else if(h<.52){rr=101;gg=151;bb=78}
+          else if(h<.73){rr=121;gg=126;bb=94}
+          else {rr=151;gg=146;bb=132}
+          const shade=.76+.24*fbm((x+31)*.01,(y+13)*.01);
+          rr=Math.round(rr*shade);gg=Math.round(gg*shade);bb=Math.round(bb*shade);
+          for(let yy=0;yy<2;yy++)for(let xx=0;xx<2;xx++){
+            if(x+xx>=REAL_W||y+yy>=REAL_H)continue;
+            const k=((y+yy)*REAL_W+(x+xx))*4;
+            d[k]=rr;d[k+1]=gg;d[k+2]=bb;d[k+3]=255;
+          }
+        }
+      }
+      const tex=document.createElement('canvas');tex.width=REAL_W;tex.height=REAL_H;
+      tex.getContext('2d',{alpha:false}).putImageData(img,0,0);
+      rctx.drawImage(tex,0,0);
+      rctx.restore();
+
+      rctx.save();
+      rctx.shadowColor='rgba(255,255,255,.68)';
+      rctx.shadowBlur=2.5;
+      rctx.strokeStyle='#fff';
+      rctx.lineWidth=1.2;
+      rctx.stroke(p);
+      rctx.restore();
+    });
+  });
+
+  // Shallow-water halos around coastlines.
+  rctx.save();
+  rctx.globalAlpha=.20;
+  rctx.strokeStyle='#60dce0';
+  rctx.lineWidth=7;
+  islands.forEach(is=>is.polys.forEach(poly=>{rctx.stroke(pathFromPoly(poly))}));
+  rctx.restore();
+
+  // Realistic-map visual details: forest speckles, beaches, rivers and ports.
+  rctx.save();
+  rctx.globalAlpha=.36;
+  trees.forEach((t,i)=>{
+    const x=t.x/W*REAL_W,y=t.y/H*REAL_H;
+    rctx.fillStyle=i%2?'#173b25':'#2c6336';
+    rctx.fillRect(x,y,2,2);
+  });
+  rctx.restore();
+
+  rctx.save();
+  rctx.strokeStyle='#2f9db0';rctx.lineWidth=3;
+  const rpaths=[
+    [[106,59],[104,73],[106,88],[102,102]],
+    [[130,207],[135,221],[142,234]],
+    [[179,218],[177,229],[168,241]]
+  ];
+  rpaths.forEach(path=>{
+    rctx.beginPath();
+    path.forEach((p,i)=>{
+      const x=p[0]/W*REAL_W,y=p[1]/H*REAL_H;
+      i?rctx.lineTo(x,y):rctx.moveTo(x,y);
+    });
+    rctx.stroke();
+  });
+  rctx.restore();
+
+  rctx.save();
+  ports.forEach(p=>{
+    const x=p.x/W*REAL_W,y=p.y/H*REAL_H;
+    rctx.fillStyle='#9d7b4f';rctx.fillRect(x,y,12,4);
+    rctx.fillStyle='#e2c58b';rctx.fillRect(x+3,y-2,6,2);
+  });
+  rctx.restore();
+}
 function initWorld(){
   terrain.fill(0);owner.fill(-1);
   mountains=[];trees=[];villages=[];goldTiles=[];fishTiles=[];units=[];ports=[];ships=[];containers=[];
@@ -431,7 +567,10 @@ function initWorld(){
   shipPaths.forEach((path,i)=>ships.push({path,phase:i*.13,speed:.008+i*.0015}));
 
   // No fabricated population. Units are created only by gameplay/simulation actions.
-  rebuildLayer();drawMini();updateUI();
+  rebuildLayer();
+  buildWideRealMap();
+  drawMini();
+  updateUI();
 }
 
 function drawTile(x,y,c){
@@ -498,237 +637,83 @@ function rebuildLayer(){
 }
 
 function fitScale(w,h){
-  return Math.max(.62,Math.min((w-24)/1024,(h-72)/512));
+  return Math.max(.45,Math.min((w-24)/REAL_W,(h-30)/REAL_H));
 }
-function isoTransform(target,w,h,scale){
-  target.translate(w/2+view.x,h/2+view.y);
-  const a=ISO_TILE_X*scale*zoom/2;
-  const b=ISO_TILE_Y*scale*zoom/2;
-  target.transform(a,b,-a,b,0,0);
-  target.translate(-160,-160);
-}
-const ISO_TILE_X=3.2,ISO_TILE_Y=1.6;
-
-function isoPoint(x,y,z=0,w=mapCanvas.clientWidth,h=mapCanvas.clientHeight,scale=fitScale(w,h)){
+function widePoint(x,y,z=0,w=mapCanvas.clientWidth,h=mapCanvas.clientHeight,scale=fitScale(w,h)){
+  const sx=x/W*REAL_W,sy=y/H*REAL_H;
   const s=scale*zoom;
-  return [
-    w/2+view.x+(x-y)*ISO_TILE_X*s/2,
-    h/2+view.y+(x+y-320)*ISO_TILE_Y*s/2-z*ISO_TILE_Y*s
-  ];
+  return [w/2+view.x+(sx-REAL_W/2)*s,h/2+view.y+(sy-REAL_H/2)*s-z*2.4*s];
+}
+// Keep existing object drawing helpers working, now with a wide top-down PH projection.
+function isoPoint(x,y,z=0,w=mapCanvas.clientWidth,h=mapCanvas.clientHeight,scale=fitScale(w,h)){
+  return widePoint(x,y,z,w,h,scale);
 }
 function drawIsoPoly(target,poly,fill,stroke='#fff',shadowY=0,w=target.canvas.width,h=target.canvas.height,scale=fitScale(w,h)){
-  const pts=poly.map(([x,y])=>isoPoint(x,y,0,w,h,scale));
+  const pts=poly.map(p=>widePoint(p[0],p[1],0,w,h,scale));
   target.save();
-  if(shadowY){target.translate(0,shadowY)}
+  if(shadowY)target.translate(0,shadowY);
   target.beginPath();target.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)target.lineTo(pts[i][0],pts[i][1]);target.closePath();
   if(fill){target.fillStyle=fill;target.fill()}
   if(stroke){target.strokeStyle=stroke;target.stroke()}
   target.restore();
 }
-function drawIsoLine(target,points,color,width=1){
-  target.beginPath();
-  points.forEach((p,i)=>{const q=isoPoint(p[0],p[1],p[2]||0,target.canvas.width,target.canvas.height,fitScale(target.canvas.width,target.canvas.height));i?target.lineTo(q[0],q[1]):target.moveTo(q[0],q[1])});
-  target.strokeStyle=color;target.lineWidth=width;target.stroke();
-}
-function drawMountain(target,m,w,h,scale){
-  const base=isoPoint(m.x,m.y,0,w,h,scale);
-  const top=isoPoint(m.x,m.y,m.h,w,h,scale);
-  const left=isoPoint(m.x-3,m.y,0,w,h,scale);
-  const right=isoPoint(m.x+3,m.y,0,w,h,scale);
-  const back=isoPoint(m.x,m.y-3,0,w,h,scale);
-  const front=isoPoint(m.x,m.y+3,0,w,h,scale);
+const ISO_TILE_X=3.2,ISO_TILE_Y=1.6;
 
-  target.fillStyle='#3f4746';
-  target.beginPath();target.moveTo(base[0]+2,base[1]+6);target.lineTo(top[0]+2,top[1]+4);target.lineTo(right[0]+4,right[1]+4);target.closePath();target.fill();
-
-  target.fillStyle=C.mountain;
-  target.beginPath();target.moveTo(left[0],left[1]);target.lineTo(top[0],top[1]);target.lineTo(back[0],back[1]);target.closePath();target.fill();
-  target.fillStyle='#5c5b57';
-  target.beginPath();target.moveTo(back[0],back[1]);target.lineTo(top[0],top[1]);target.lineTo(right[0],right[1]);target.closePath();target.fill();
-
-  if(m.h>7){
-    target.fillStyle=C.snow;
-    target.beginPath();target.moveTo(top[0],top[1]);target.lineTo(top[0]+5,top[1]+m.h*.7);target.lineTo(top[0]-4,top[1]+m.h*.7);target.closePath();target.fill();
-  }
-}
-function drawTree(target,t,w,h,scale){
-  const p=isoPoint(t.x,t.y,0,w,h,scale);
-  target.fillStyle='#1e3b28';target.fillRect(Math.round(p[0]-2),Math.round(p[1]-4),3,4);
-  target.fillStyle='#4f9451';target.fillRect(Math.round(p[0]-3),Math.round(p[1]-6),5,4);
-  target.fillStyle='#2f7040';target.fillRect(Math.round(p[0]-2),Math.round(p[1]-8),3,3);
-}
-function drawVillage(target,v,w,h,scale){
-  const p=isoPoint(v.x,v.y,0,w,h,scale);
-  const s=Math.max(.7,scale*zoom);
-  const x=p[0],y=p[1];
-  target.fillStyle='#513c2b';target.fillRect(Math.round(x-4*s),Math.round(y-1*s),Math.round(8*s),Math.round(5*s));
-  target.fillStyle='#d9c38a';target.fillRect(Math.round(x-3*s),Math.round(y),Math.round(6*s),Math.round(4*s));
-  target.fillStyle=C.units[v.clan];target.fillRect(Math.round(x-1*s),Math.round(y-5*s),Math.max(1,Math.round(2*s)),Math.max(1,Math.round(2*s)));
-}
-function drawContainers(target,now,w,h,scale){
-  containers.forEach(c=>{
-    const p=isoPoint(c.x,c.y,c.z,w,h,scale);
-    const s=Math.max(.55,scale*zoom);
-    target.fillStyle='#29383b';
-    target.fillRect(Math.round(p[0]-2*s),Math.round(p[1]-2*s),Math.max(1,Math.round(4*s)),Math.max(1,Math.round(2*s)));
-    target.fillStyle=c.color;
-    target.fillRect(Math.round(p[0]-1*s),Math.round(p[1]-3*s),Math.max(1,Math.round(3*s)),Math.max(1,Math.round(2*s)));
-  });
-}
-function drawPorts(target,w,h,scale){
-  ports.forEach(p=>{
-    const land=isoPoint(p.x,p.y,0,w,h,scale),water=isoPoint(p.water[0],p.water[1],0,w,h,scale);
-    target.strokeStyle='#c4aa78';target.lineWidth=Math.max(1,scale*zoom);
-    target.beginPath();target.moveTo(land[0],land[1]);target.lineTo(water[0],water[1]);target.stroke();
-    target.fillStyle='#9a7a4d';
-    target.fillRect(Math.round(water[0]-2),Math.round(water[1]-1),Math.max(2,Math.round(5*scale)),Math.max(1,Math.round(2*scale)));
-  });
-}
-function drawShip(target,s,w,h,scale,now){
-  const [a,b]=s.path;
-  const u=(now*.001*s.speed*60+s.phase)%1;
-  const x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u;
-  const p=isoPoint(x,y,.5,w,h,scale);
-  const ang=Math.atan2((b[1]-a[1])*ISO_TILE_Y,(b[0]-a[0])*ISO_TILE_X);
-  const len=Math.max(5,scale*zoom*10),wid=Math.max(2,scale*zoom*4);
-  target.save();target.translate(p[0],p[1]);target.rotate(ang);
-  target.fillStyle='rgba(0,0,0,.35)';target.fillRect(-len*.55,wid*.7,len,wid);
-  target.fillStyle=C.shipDark;target.fillRect(-len*.55,-wid*.5,len,wid);
-  target.fillStyle=C.ship;target.fillRect(-len*.35,-wid*.9,len*.55,Math.max(1,wid*.55));
-  target.fillStyle='#f1d98b';target.fillRect(len*.18,-wid*1.8,Math.max(1,scale*zoom),Math.max(1,scale*zoom));
-  target.strokeStyle='#eee';target.lineWidth=1;target.beginPath();target.moveTo(len*.18,-wid*1.8);target.lineTo(len*.18,wid*.2);target.stroke();
-  target.restore();
-}
-function drawUnits(target,w,h,scale,now){
-  const t=now*.001;
-  units.forEach(u=>{
-    const bob=Math.sin(t*4+u.phase)*.25;
-    const p=isoPoint(u.x,u.y,.55+bob,w,h,scale);
-    const r=Math.max(1,Math.min(3,scale*zoom*1.35));
-    target.fillStyle='rgba(0,0,0,.35)';target.fillRect(Math.round(p[0]-r),Math.round(p[1]+r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*.55)));
-    target.fillStyle=C.units[u.clan];target.fillRect(Math.round(p[0]-r),Math.round(p[1]-r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*1.5)));
-    target.fillStyle='#f3c6a1';target.fillRect(Math.round(p[0]),Math.round(p[1]-r*1.3),Math.max(1,Math.round(r)),Math.max(1,Math.round(r)));
-  });
-}
-function drawFish(target,now,w,h,scale){
-  const t=now*.001;
-  fishTiles.forEach((p,i)=>{
-    const dx=Math.round(Math.sin(t*1.5+i)*1.5),dy=Math.round(Math.cos(t*1.2+i));
-    const q=isoPoint(p[0]+dx,p[1]+dy,.15,w,h,scale);
-    target.fillStyle=C.fish;target.fillRect(Math.round(q[0]),Math.round(q[1]),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
-  });
-}
-function drawGold(target,now,w,h,scale){
-  const t=now*.001;
-  goldTiles.forEach((g,i)=>{
-    const p=isoPoint(g[0],g[1],.2,w,h,scale);
-    const on=Math.sin(t*5+g[0]+g[1]+i)>.15;
-    target.fillStyle=on?'#fff0a0':C.gold;
-    target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
-  });
-}
 function drawIslandOutlines(target,w,h,scale){
-  islands.forEach(is=>{
-    is.polys.forEach(poly=>drawIsoPoly(target,poly,null,'#fff',0,w,h,scale));
-  });
+  islands.forEach(is=>is.polys.forEach(poly=>drawIsoPoly(target,poly,null,'#fff',0,w,h,scale)));
 }
 function drawDynamicWorld(target,w,h,now,exportMode=false){
   const scale=fitScale(w,h);
   target.imageSmoothingEnabled=false;
-  target.fillStyle=C.ocean;
-  target.fillRect(0,0,w,h);
+  target.fillStyle='#061a33';target.fillRect(0,0,w,h);
 
-  // Low-poly island depth: compact dark extrusion below each real coastline.
-  islands.forEach(is=>{
-    is.polys.forEach(poly=>{
-      drawIsoPoly(target,poly,'rgba(2,13,18,.90)',null,Math.max(5,9*scale*zoom),w,h,scale);
-    });
-  });
+  const s=scale*zoom;
+  const dw=REAL_W*s,dh=REAL_H*s;
+  target.drawImage(realLayer,w/2+view.x-dw/2,h/2+view.y-dh/2,dw,dh);
 
-  // Small ocean wave marks keep the sea alive while staying flat/pixel based.
-  const wt=now*.001;
-  target.save();
-  target.globalAlpha=.24;
-  target.fillStyle='#8fd7db';
-  for(let i=0;i<90;i++){
-    const wx=(i*37)%W, wy=(i*71)%H;
-    const sp=((i%5)+1);
-    const q=isoPoint((wx+Math.round(Math.sin(wt*0.7+i)*sp))%W,wy,.02,w,h,scale);
-    target.fillRect(Math.round(q[0]),Math.round(q[1]),Math.max(1,Math.round(scale*zoom)),Math.max(1,Math.round(scale*zoom/2)));
-  }
-  target.restore();
-
-  // True 45° isometric projection of the real 320×320 tile layer.
-  // One logical square tile becomes an isometric diamond/parallelogram.
-  const a=ISO_TILE_X*scale*zoom/2;
-  const b=ISO_TILE_Y*scale*zoom/2;
-  target.save();
-  target.translate(w/2+view.x,h/2+view.y);
-  target.transform(a,b,-a,b,0,0);
-  target.translate(-160,-160);
-  target.drawImage(layer,0,0,W,H);
-  target.restore();
-
-  // White glow/outline over each island edge.
-  target.save();
-  target.shadowColor='#ffffff';
-  target.shadowBlur=Math.max(1,1.6*scale*zoom);
+  // Crisp coastline border on the wide map.
   drawIslandOutlines(target,w,h,scale);
-  target.restore();
 
-  // Mountains, forests, ports, containers, villages, ships, gold, fish, people.
-  mountains.forEach(m=>drawMountain(target,m,w,h,scale));
-  trees.forEach(t=>drawTree(target,t,w,h,scale));
-  drawPorts(target,w,h,scale);
-  drawContainers(target,now,w,h,scale);
-  villages.forEach(v=>drawVillage(target,v,w,h,scale));
-  ships.forEach(s=>drawShip(target,s,w,h,scale,now));
+  // Dynamic entities layered above the map.
   drawGold(target,now,w,h,scale);
   drawFish(target,now,w,h,scale);
+  trees.slice(0,900).forEach(t=>drawTree(target,t,w,h,scale));
+  mountains.forEach(m=>drawMountain(target,m,w,h,scale));
+  villages.forEach(v=>drawVillage(target,v,w,h,scale));
+  drawPorts(target,w,h,scale);
+  drawContainers(target,now,w,h,scale);
+  ships.forEach(s=>drawShip(target,s,w,h,scale,now));
   drawUnits(target,w,h,scale,now);
 
-  // Island labels: tiny strategy-map labels.
   if(!exportMode){
     target.save();
-    target.font='900 9px monospace';
-    target.textAlign='center';
-    target.textBaseline='middle';
+    target.font='900 10px monospace';
+    target.textAlign='center';target.textBaseline='middle';
     islands.forEach(is=>{
-      const p=isoPoint(is.label[0],is.label[1],.3,w,h,scale);
-      target.fillStyle='rgba(0,0,0,.7)';target.fillText(is.name,p[0]+1,p[1]+1);
+      const p=widePoint(is.label[0],is.label[1],1,w,h,scale);
+      target.fillStyle='rgba(0,0,0,.72)';target.fillText(is.name,p[0]+1,p[1]+1);
       target.fillStyle='#fff';target.fillText(is.name,p[0],p[1]);
     });
     target.restore();
   }
 
   if(disaster){
-    const pulse=(Math.sin(now*.01)+1)/2;
-    const q=isoPoint(disaster.x,disaster.y,1,w,h,scale);
-    target.fillStyle=disaster.type==='Volcano'?'#f26324':'#f0c55f';
+    const q=widePoint(disaster.x,disaster.y,2,w,h,scale);
+    target.fillStyle=disaster.type==='Volcano'?'#ff6b22':'#f4c75b';
+    const rr=(4+Math.sin(now*.012)*2)*scale*zoom;
     for(let i=0;i<24;i++){
-      const a=i*.85+now*.002,r=(2+i*.35)*scale*zoom;
-      target.fillRect(Math.round(q[0]+Math.cos(a)*r),Math.round(q[1]+Math.sin(a)*r),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
+      const a=i*.8+now*.002;
+      target.fillRect(Math.round(q[0]+Math.cos(a)*rr),Math.round(q[1]+Math.sin(a)*rr),Math.max(1,Math.round(scale*zoom)),Math.max(1,Math.round(scale*zoom)));
     }
-    if(pulse>.55){target.fillStyle='rgba(255,255,255,.24)';target.fillRect(q[0]-8,q[1]-8,16,16)}
   }
 
-  // Simple night overlay.
-  const daylight=Math.max(0,Math.sin((day-6)/12*Math.PI));
-  const night=1-daylight;
+  const daylight=Math.max(0,Math.sin((day-6)/12*Math.PI)),night=1-daylight;
   if(night>.08){
-    target.fillStyle='rgba(6,17,30,'+(0.08+night*.30)+')';
-    target.fillRect(0,0,w,h);
-    if(night>.58){
-      villages.forEach(v=>{
-        const p=isoPoint(v.x,v.y,1,w,h,scale);
-        target.fillStyle='#ffd66a';target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale*zoom)),Math.max(1,Math.round(scale*zoom)));
-      });
-    }
+    target.fillStyle='rgba(5,13,29,'+(0.08+night*.28)+')';target.fillRect(0,0,w,h);
   }
 
   if(!exportMode){
-    target.strokeStyle='rgba(255,255,255,.10)';
-    target.strokeRect(1,1,w-2,h-2);
+    target.strokeStyle='rgba(255,255,255,.12)';target.strokeRect(1,1,w-2,h-2);
   }
 }
 function drawFrame(now){
@@ -750,7 +735,7 @@ function drawMini(){
   mctx.setTransform(dpr,0,0,dpr,0,0);mctx.imageSmoothingEnabled=false;
   mctx.fillStyle=C.ocean;mctx.fillRect(0,0,w,h);
   // Mini-map uses the original top-down tile layer so the whole 320×320 world is readable.
-  mctx.drawImage(layer,0,0,320,320,0,0,w,h);
+  mctx.drawImage(realLayer,0,0,REAL_W,REAL_H,0,0,w,h);
   mctx.strokeStyle='#bfe9c2';mctx.strokeRect(0,0,w,h);
 }
 
@@ -832,7 +817,7 @@ function resetWorld(){
   document.getElementById('events').innerHTML='';
   initWorld();
   log('🌏 Separate Philippine islands created: Luzon, Visayas and Mindanao');
-  log('🗺 Isometric 2D 320×320 LARGE map generated — 102,400 tiles.');
+  log('🗺 Wide 320×320 LARGE Philippines map generated — 102,400 tiles.');
   log('🚢 Port, ship and container objects are game-state entities.');
   log('👥 Population starts at 0 — no fabricated people count.');
   alertWorld('🌏 WORLD RESET');updateUI();
@@ -892,7 +877,7 @@ function downloadBlob(blob,name){
 function exportJSON(){
   const data={
     game:'CLANWORLD PH',version:'1.0',
-    map:{width:W,height:H,tiles:W*H,zone:'5x5',tileFormula:'zone×64',projection:'isometric-2D'},
+    map:{width:W,height:H,tiles:W*H,zone:'5x5',tileFormula:'zone×64',projection:'wide-top-down-2D'},
     style:'Original fake pixel + isometric low-poly 2D strategy simulation',
     islands:islands.map(i=>({id:i.id,name:i.name,clan:i.clan,color:i.color,polys:i.polys,partial:!!i.partial})),
     terrain:Array.from(terrain),owner:Array.from(owner),
