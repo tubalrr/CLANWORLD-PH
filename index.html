@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CLANWORLD PH — Build. Unite. Conquer.</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#07120f;color:#edf6ef;font-family:Inter,system-ui,sans-serif}button,select{font:inherit}
+.app{max-width:1280px;margin:auto;padding:18px}.top{display:flex;justify-content:space-between;gap:12px;align-items:end;margin-bottom:14px}.eyebrow{color:#7ee09a;font-size:12px;font-weight:800;letter-spacing:.12em}.title{font-size:clamp(25px,4vw,44px);font-weight:900;margin:3px 0}.muted{color:#9eb0a5}.live{border:1px solid #28533d;background:#10261c;padding:10px 14px;border-radius:14px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px}.panel{background:#0d1d17;border:1px solid #20382c;border-radius:20px;padding:14px}.world{position:relative;min-height:650px;overflow:hidden;border-radius:16px;background:#0b3340;background-image:radial-gradient(circle at 30% 25%,#184c58 0 2px,transparent 3px),radial-gradient(circle at 75% 70%,#164954 0 2px,transparent 3px)}
+.terrain{position:absolute;inset:0;background:
+radial-gradient(ellipse 30% 22% at 22% 22%,#789d58 0 48%,transparent 49%),
+radial-gradient(ellipse 27% 19% at 68% 27%,#607e4b 0 48%,transparent 49%),
+radial-gradient(ellipse 23% 17% at 43% 53%,#8b9c5b 0 46%,transparent 47%),
+radial-gradient(ellipse 36% 25% at 72% 72%,#6f8b4c 0 48%,transparent 49%),
+radial-gradient(ellipse 18% 12% at 15% 76%,#876d4d 0 47%,transparent 48%)}
+.mountain{position:absolute;width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:35px solid #4a514c;filter:drop-shadow(0 5px 2px #0006)}.forest{position:absolute;width:12px;height:18px;background:#244b32;border-radius:8px 8px 3px 3px}.river{position:absolute;width:4px;background:#65c2d2;opacity:.75;border-radius:9px;transform-origin:top}.islandLabel{position:absolute;font-weight:900;text-shadow:0 2px 6px #000;pointer-events:none}.village{position:absolute;width:9px;height:9px;border-radius:50%;background:#f5d58c;box-shadow:0 0 0 3px #0005}.territory{position:absolute;border:2px dashed;opacity:.5;border-radius:45%}.mapLegend{position:absolute;left:12px;bottom:12px;background:#07120dcc;border:1px solid #ffffff20;padding:9px 11px;border-radius:12px;font-size:12px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.clan{background:#10251b;border:1px solid #234332;border-radius:16px;padding:12px}.name{font-weight:900}.meter{height:7px;background:#07120f;border-radius:9px;overflow:hidden;margin:8px 0}.fill{height:100%;background:#77d994}.stats{font-size:12px;color:#afc0b5;line-height:1.7}.side{display:flex;flex-direction:column;gap:12px}.control{display:flex;gap:8px;flex-wrap:wrap}.control button,.control select{border:1px solid #2b4939;background:#13271f;color:#edf6ef;border-radius:12px;padding:10px 12px;cursor:pointer}.control button:hover{border-color:#77d994}.events{height:330px;overflow:auto;display:flex;flex-direction:column;gap:7px}.event{background:#13251e;border-radius:11px;padding:9px;font-size:12px}.giftGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.gift{width:100%}.small{font-size:12px}.leader{color:#f6d67e}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.world{min-height:480px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div><div class="eyebrow">🔴 LIVE SIMULATION</div><div class="title">CLANWORLD PH</div><div class="muted">Build. Unite. Conquer.</div></div><div class="live">👀 <b id="viewers">1,284</b> viewers</div></header>
+<div class="layout">
+<main>
+<section class="panel world" id="world"><div class="terrain"></div>
+<div class="territory" style="left:8%;top:9%;width:39%;height:36%;border-color:#75d994"></div>
+<div class="territory" style="left:31%;top:38%;width:38%;height:30%;border-color:#72b9e5"></div>
+<div class="territory" style="right:7%;bottom:8%;width:45%;height:37%;border-color:#e0a35f"></div>
+<div class="islandLabel" style="left:21%;top:30%">🟢 LUZON</div><div class="islandLabel" style="left:47%;top:52%">🔵 VISAYAS</div><div class="islandLabel" style="right:18%;bottom:25%">🟠 MINDANAO</div>
+<div class="mapLegend">🌊 Water &nbsp; ⛰️ Mountains &nbsp; 🌲 Forest &nbsp; 🟡 Villages</div></section>
+<div class="cards" id="cards"></div>
+</main>
+<aside class="side">
+<section class="panel"><b>🎁 Clan Gifts</b><p class="small muted">Gifts add contribution and members. Maximum 400 members per clan.</p>
+<select id="clan" style="width:100%;margin-bottom:8px"><option value="0">Luzon</option><option value="1">Visayas</option><option value="2">Mindanao</option></select>
+<div class="giftGrid">
+<button class="control gift" data-add="1">🌹 +1</button><button class="control gift" data-add="3">🎁 +3</button><button class="control gift" data-add="10">💎 +10</button><button class="control gift" data-add="25">🏰 +25</button><button class="control gift" data-add="50">🐉 +50</button><button class="control gift" data-add="100">👑 +100</button>
+</div></section>
+<section class="panel"><div class="control"><button id="start">▶ Start</button><button id="event">⚡ Event</button><button id="reset">↺ Reset</button></div></section>
+<section class="panel"><b>📜 Live Event Feed</b><div class="events" id="events"></div></section>
+</aside></div></div>
+<script>
+const names=['Luzon','Visayas','Mindanao'], emojis=['🟢','🔵','🟠'];
+let clans=names.map((name,i)=>({name,members:0,points:0,villages:1,territory:8,leader:'No Leader'}));
+let running=false,timer=null,viewers=1284;
+const $=id=>document.getElementById(id);
+function log(t){const e=document.createElement('div');e.className='event';e.textContent=t;$('events').prepend(e);while($('events').children.length>20)$('events').lastChild.remove()}
+function render(){ $('viewers').textContent=viewers.toLocaleString();$('cards').innerHTML=clans.map((c,i)=>`<article class="clan"><div class="name">${emojis[i]} ${c.name}</div><div class="meter"><div class="fill" style="width:${c.members/4}%"></div></div><div class="stats">👥 ${c.members}/400<br>👑 <span class="leader">${c.leader}</span><br>💎 ${c.points.toLocaleString()} contribution<br>🏘️ ${c.villages} villages<br>🗺️ ${c.territory}% territory</div></article>`).join('')}
+function gift(n){const i=+$('clan').value,c=clans[i],old=c.members;c.members=Math.min(400,c.members+n);c.points+=n*10;c.villages=Math.min(99,c.villages+Math.floor(n/25));c.territory=Math.min(100,c.territory+Math.max(1,Math.floor(n/20)));c.leader=c.points?'Top Contributor':'No Leader';log(`🎁 ${c.name} received a gift • +${c.members-old} members • +${n*10} contribution`);render()}
+function tick(){viewers=Math.max(100,viewers+Math.floor(Math.random()*51)-20);clans.forEach(c=>{if(c.members){if(Math.random()<.35)c.territory=Math.min(100,c.territory+1);if(Math.random()<.2){c.villages++;log(`🏘️ ${c.name} founded a new village.`)}}});if(Math.random()<.3){const i=Math.floor(Math.random()*3);log(`🌱 ${names[i]} expanded its civilization.`)}render()}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>gift(+b.dataset.add));
+$('start').onclick=()=>{running=!running;$('start').textContent=running?'⏸ Pause':'▶ Start';if(running){timer=setInterval(tick,1800);log('🔴 Simulation started.');}else{clearInterval(timer);log('⏸ Simulation paused.')}};
+$('event').onclick=()=>{const i=Math.floor(Math.random()*3),x=['🤝 formed a trade alliance','⚔️ entered a border conflict','🌾 discovered fertile land','🧭 sent explorers','🏰 expanded its territory'][Math.floor(Math.random()*5)];clans[i].territory=Math.min(100,clans[i].territory+1);log(`${emojis[i]} ${names[i]} ${x}.`);render()};
+$('reset').onclick=()=>{clearInterval(timer);running=false;clans=names.map(name=>({name,members:0,points:0,villages:1,territory:8,leader:'No Leader'}));viewers=1284;$('start').textContent='▶ Start';$('events').innerHTML='';log('🌍 New world created.');render()};
+for(let i=0;i<28;i++){const m=document.createElement('div');m.className='mountain';m.style.left=(8+Math.random()*82)+'%';m.style.top=(8+Math.random()*78)+'%';$('world').appendChild(m)}
+for(let i=0;i<55;i++){const f=document.createElement('div');f.className='forest';f.style.left=(4+Math.random()*92)+'%';f.style.top=(5+Math.random()*88)+'%';$('world').appendChild(f)}
+for(let i=0;i<7;i++){const r=document.createElement('div');r.className='river';r.style.left=(8+Math.random()*84)+'%';r.style.top=(5+Math.random()*35)+'%';r.style.height=(100+Math.random()*260)+'px';r.style.transform='rotate('+(Math.random()*40-20)+'deg)';$('world').appendChild(r)}
+for(let i=0;i<18;i++){const v=document.createElement('div');v.className='village';v.style.left=(8+Math.random()*84)+'%';v.style.top=(8+Math.random()*82)+'%';$('world').appendChild(v)}
+log('🌍 New world created. Three clans are waiting for viewers.');render();
+</script>
+</body>
+</html>
