@@ -175,7 +175,7 @@ select{width:100%;margin:7px 0}
     </div>
     <div id="zoomReadout" style="position:absolute;right:122px;bottom:51px;padding:5px 7px;background:#09231feF;border:1px solid #50716a;border-radius:4px;font-size:8px;font-weight:1000;color:#e8f3e5">100%</div>
 
-    <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · ISOMETRIC 45°</div>
+    <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · 45° ISOMETRIC · 320×320</div>
 
     <div class="legend">
       <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
@@ -498,7 +498,7 @@ function rebuildLayer(){
 }
 
 function fitScale(w,h){
-  return Math.max(.55,Math.min((w-18)/1024,(h-18)/512));
+  return Math.max(.62,Math.min((w-24)/1024,(h-72)/512));
 }
 function isoTransform(target,w,h,scale){
   target.translate(w/2+view.x,h/2+view.y);
@@ -638,27 +638,41 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
   target.fillStyle=C.ocean;
   target.fillRect(0,0,w,h);
 
-  // Dark extrusion/drop shadows under each island — isometric depth without realistic textures.
+  // Low-poly island depth: compact dark extrusion below each real coastline.
   islands.forEach(is=>{
     is.polys.forEach(poly=>{
-      drawIsoPoly(target,poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*zoom),w,h,scale);
+      drawIsoPoly(target,poly,'rgba(2,13,18,.90)',null,Math.max(5,9*scale*zoom),w,h,scale);
     });
   });
 
-  // Projected 320×320 world — real tile state rendered as a 45° isometric map.
-  const worldScale=scale*zoom;
-  target.drawImage(
-    isoLayer,
-    w/2+view.x-ISO_W*worldScale/2,
-    h/2+view.y-ISO_H*worldScale/2,
-    ISO_W*worldScale,
-    ISO_H*worldScale
-  );
+  // Small ocean wave marks keep the sea alive while staying flat/pixel based.
+  const wt=now*.001;
+  target.save();
+  target.globalAlpha=.24;
+  target.fillStyle='#8fd7db';
+  for(let i=0;i<90;i++){
+    const wx=(i*37)%W, wy=(i*71)%H;
+    const sp=((i%5)+1);
+    const q=isoPoint((wx+Math.round(Math.sin(wt*0.7+i)*sp))%W,wy,.02,w,h,scale);
+    target.fillRect(Math.round(q[0]),Math.round(q[1]),Math.max(1,Math.round(scale*zoom)),Math.max(1,Math.round(scale*zoom/2)));
+  }
+  target.restore();
+
+  // True 45° isometric projection of the real 320×320 tile layer.
+  // One logical square tile becomes an isometric diamond/parallelogram.
+  const a=ISO_TILE_X*scale*zoom/2;
+  const b=ISO_TILE_Y*scale*zoom/2;
+  target.save();
+  target.translate(w/2+view.x,h/2+view.y);
+  target.transform(a,b,-a,b,0,0);
+  target.translate(-160,-160);
+  target.drawImage(layer,0,0,W,H);
+  target.restore();
 
   // White glow/outline over each island edge.
   target.save();
   target.shadowColor='#ffffff';
-  target.shadowBlur=Math.max(1,2.4*scale*zoom);
+  target.shadowBlur=Math.max(1,1.6*scale*zoom);
   drawIslandOutlines(target,w,h,scale);
   target.restore();
 
@@ -676,7 +690,7 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
   // Island labels: tiny strategy-map labels.
   if(!exportMode){
     target.save();
-    target.font='900 8px monospace';
+    target.font='900 9px monospace';
     target.textAlign='center';
     target.textBaseline='middle';
     islands.forEach(is=>{
