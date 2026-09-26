@@ -26,7 +26,7 @@
 <section class="panel"><b>🎁 Clan Gifts</b><p class="small muted">Contribution determines the clan leader. Member cap: 400.</p>
 <select id="clan" style="width:100%;margin:6px 0"><option value="0">Luzon</option><option value="1">Visayas</option><option value="2">Mindanao</option></select>
 <div class="giftGrid"><button class="control gift" data-add="1">🌹 +1</button><button class="control gift" data-add="3">🎁 +3</button><button class="control gift" data-add="10">💎 +10</button><button class="control gift" data-add="25">🏰 +25</button><button class="control gift" data-add="50">🐉 +50</button><button class="control gift" data-add="100">👑 +100</button></div></section>
-<section class="panel"><div class="control"><button id="start">▶ Start</button><button id="event">⚡ Event</button><button id="reset">↺ Reset</button></div><div class="status muted" id="status">World paused.</div></section>
+<section class="panel"><div class="control"><button id="start">▶ Start</button><button id="event">⚡ Event</button><button id="disaster">🌋 Disaster</button><button id="reset">↺ Reset</button></div><div class="status muted" id="status">World paused.</div></section>
 <section class="panel"><b>📜 Live Event Feed</b><div class="events" id="events"></div></section>
 </aside>
 </div>
@@ -56,7 +56,7 @@ oceanRing.rotation.x=-Math.PI/2; oceanRing.position.y=-.66; scene.add(oceanRing)
 
 const names=['Luzon','Visayas','Mindanao'],colors=[0x48c878,0x55aee0,0xe5a052],emojis=['🟢','🔵','🟠'];
 let clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
-let running=false,timer=null,viewers=1284,worldObjects=[],units=[],villages=[];
+let running=false,timer=null,viewers=1284,worldObjects=[],units=[],villages=[],disaster=null;
 
 const islands=[
  {name:'Luzon',clan:0,x:-8,z:-7,w:13,d:15,seed:4},
@@ -122,6 +122,38 @@ function spawn(){
   }
  });
 }
+function createDisaster(type){
+ if(disaster?.group){scene.remove(disaster.group);}
+ const group=new THREE.Group(); disaster={type,group,life:0};
+ if(type==='Earthquake'){
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.5,2.2,48),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.85,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2; ring.position.y=.9; group.add(ring);
+ }else if(type==='Typhoon'){
+  const cloud=new THREE.Mesh(new THREE.TorusGeometry(3.2,.7,10,48),new THREE.MeshBasicMaterial({color:0x9ca9b8,transparent:true,opacity:.65}));
+  cloud.rotation.x=Math.PI/2; cloud.position.set(0,8,0); group.add(cloud);
+  const eye=new THREE.Mesh(new THREE.TorusGeometry(1.25,.22,8,32),new THREE.MeshBasicMaterial({color:0xd9e5ef,transparent:true,opacity:.8}));
+  eye.rotation.x=Math.PI/2;eye.position.set(0,8.2,0);group.add(eye);
+ }else if(type==='Tsunami'){
+  const wave=new THREE.Mesh(new THREE.TorusGeometry(4,.45,10,64),new THREE.MeshBasicMaterial({color:0x83e6ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
+  wave.rotation.x=Math.PI/2;wave.position.y=.2;group.add(wave);
+ }else if(type==='Volcano'){
+  const smoke=new THREE.Mesh(new THREE.SphereGeometry(1.8,16,12),new THREE.MeshBasicMaterial({color:0x34383a,transparent:true,opacity:.72}));
+  smoke.position.set(-8,9,-7);group.add(smoke);
+  const fire=new THREE.PointLight(0xff5a1f,8,15);fire.position.set(-8,3,-7);group.add(fire);
+ }else{
+  const fire=new THREE.Mesh(new THREE.ConeGeometry(2.2,.5,20),new THREE.MeshBasicMaterial({color:0xff5a1f,transparent:true,opacity:.8}));
+  fire.position.set(10,.5,11);group.add(fire);
+ }
+ scene.add(group);worldObjects.push(group);
+}
+function triggerDisaster(){
+ const types=['Earthquake','Typhoon','Tsunami','Volcano','Wildfire'];
+ const labels=['🌎 EARTHQUAKE','🌀 TYPHOON','🌊 TSUNAMI','🌋 VOLCANIC ERUPTION','🔥 WILDFIRE'];
+ const i=Math.floor(Math.random()*types.length);
+ createDisaster(types[i]); log(labels[i]+' has struck the world!');
+ document.getElementById('status').textContent='⚠️ Disaster: '+types[i];
+ setTimeout(()=>{if(disaster?.group){scene.remove(disaster.group);disaster=null;document.getElementById('status').textContent=running?'3D world is evolving…':'World paused.'}},7000);
+}
 function log(t){const e=document.createElement('div');e.className='event';e.textContent=t;document.getElementById('events').prepend(e);while(document.getElementById('events').children.length>20)document.getElementById('events').lastChild.remove()}
 function render(){
  clans.forEach((c,i)=>c.territory=islands.filter(x=>x.clan===i).length);
@@ -137,6 +169,7 @@ function tick(){
 }
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>gift(+b.dataset.add));
 document.getElementById('start').onclick=()=>{running=!running;document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';document.getElementById('status').textContent=running?'3D world is evolving…':'World paused.';if(running){timer=setInterval(tick,700);log('🔴 Real 3D island simulation started.')}else{clearInterval(timer);log('⏸ Simulation paused.')}};
+document.getElementById('disaster').onclick=()=>triggerDisaster();
 document.getElementById('event').onclick=()=>{const i=Math.floor(Math.random()*3),e=['🤝 opened a sea trade route','⚔️ border conflict started','🌾 discovered fertile land','🧭 explorers crossed the islands','🏰 expanded a settlement'];log(emojis[i]+' '+names[i]+' '+e[Math.floor(Math.random()*e.length)]+'.');render()};
 document.getElementById('reset').onclick=()=>{clearInterval(timer);running=false;clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));viewers=1284;camera.position.set(0,36,42);controls.target.set(0,1,0);spawn();document.getElementById('start').textContent='▶ Start';document.getElementById('status').textContent='World paused.';document.getElementById('events').innerHTML='';log('🌏 3D Philippine island world recreated.');render()};
 
@@ -152,7 +185,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
 
 spawn();log('🌏 Real WebGL 3D Philippine islands created.');render();
-function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)} animate();
+function animate(){requestAnimationFrame(animate);controls.update();if(disaster){disaster.life+=.035;const g=disaster.group;if(disaster.type==='Earthquake'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*7)*.25+disaster.life*.12);g.position.y=Math.sin(disaster.life*35)*.08}else if(disaster.type==='Typhoon'){g.rotation.y+=.025;g.position.x=Math.sin(disaster.life)*8;g.position.z=Math.cos(disaster.life)*5}else if(disaster.type==='Tsunami'){g.children[0].scale.setScalar(1+disaster.life*.55);g.children[0].material.opacity=Math.max(0,.75-disaster.life*.08)}else if(disaster.type==='Volcano'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*2)*.12+disaster.life*.08)}else{g.rotation.y+=.02;g.scale.setScalar(1+Math.sin(disaster.life*8)*.12)} }renderer.render(scene,camera)} animate();
 </script>
 </body>
 </html>
