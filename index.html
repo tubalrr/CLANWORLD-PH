@@ -109,7 +109,7 @@ select{width:100%;margin:7px 0}
     </div>
 
     <div class="live"><span class="liveDot"></span><span id="viewers">1,284</span> VIEWERS</div>
-    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5</div>
+    <div class="sizeBadge">LARGE · 320×320 · 102,400 TILES · ZONE 5×5 · ISOMETRIC 2D</div>
     <div class="day" id="dayUI">☀ DAY 124 · 12:30</div>
 
     <div class="leftnav pointer">
@@ -174,7 +174,7 @@ select{width:100%;margin:7px 0}
       <button class="zoomBtn fitBtn" id="zoomReset" aria-label="Reset zoom">1:1</button>
     </div>
 
-    <div class="help">DRAG = ROTATE · SHIFT+DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET</div>
+    <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · ISOMETRIC 45°</div>
 
     <div class="legend">
       <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
@@ -194,9 +194,10 @@ select{width:100%;margin:7px 0}
 'use strict';
 
 /* CLANWORLD PH
-   Fake/original browser game map.
-   Canvas only: no external images.
-   Large world = 320×320 tiles / 102,400 tiles.
+   Fake/original browser game.
+   320×320 Large world = 102,400 logical tiles.
+   Isometric 2D strategy presentation with pixel units.
+   Canvas only — no external images.
 */
 const W=320,H=320,ZONE=5,UNIT_COUNT=1100;
 const mapCanvas=document.getElementById('map');
@@ -214,60 +215,43 @@ mctx.imageSmoothingEnabled=false;
 
 const C={
   ocean:'#0a3a4a',shallow:'#2ec5d3',
-  luzon:'#7aa85a',mindanao:'#907051',
-  visayas:'#5a8fb0',visayas2:'#74b3cd',mindoro:'#76a94f',
-  beach:'#dfc38c',grass:'#86b85b',rice:'#acd06d',forest:'#315b3a',
+  luzon:'#78a85a',mindanao:'#907051',
+  visayas:'#5a8eae',visayas2:'#73b1cc',mindoro:'#75a84d',
+  beach:'#dfc38c',grass:'#86b85b',rice:'#a9cc6e',forest:'#315b3a',
   mountain:'#706e68',snow:'#eeeeea',river:'#2a9daf',
-  road:'#8b6a43',white:'#ffffff',shadow:'#061a20',
+  road:'#896744',white:'#ffffff',shadow:'#04161d',
   gold:'#ffd83d',fish:'#eaf8de',
-  units:['#bfe96e','#61d5ff','#ffc35d','#e6a4ff','#ff7d7d']
+  units:['#bfe96e','#61d5ff','#ffc35d','#e6a4ff','#ff7d7d'],
+  ship:'#c6d0cb',shipDark:'#46565b',container:['#d96f4f','#5ca7c7','#d5a947','#7f78c8']
 };
 
 const islands=[
-  {
-    id:'mindanao',name:'MINDANAO',clan:2,color:C.mindanao,
-    poly:[[45,36],[64,25],[91,21],[121,25],[145,38],[163,53],[184,59],[197,75],[191,92],[174,104],[160,117],[139,121],[120,113],[103,120],[85,112],[66,116],[52,104],[39,89],[35,67]],
-    seed:11,label:[112,72]
-  },
-  {
-    id:'bohol',name:'BOHOL',clan:1,color:C.visayas,
-    poly:[[143,132],[158,128],[171,133],[178,143],[175,153],[164,160],[149,157],[141,149]],
-    seed:21,label:[158,144]
-  },
-  {
-    id:'samar-leyte',name:'SAMAR-LEYTE',clan:1,color:C.visayas,
-    poly:[[43,184],[56,175],[70,178],[82,188],[91,199],[96,214],[91,229],[83,244],[70,253],[58,247],[50,235],[44,220],[39,204]],
-    seed:31,label:[66,212]
-  },
-  {
-    id:'panay-negros-cebu',name:'PANAY-NEGROS-CEBU',clan:1,color:C.visayas2,
-    poly:[[105,178],[118,171],[133,176],[144,184],[156,181],[169,184],[182,194],[193,206],[207,210],[221,221],[218,235],[205,246],[190,242],[176,248],[160,241],[145,248],[132,239],[116,242],[104,231],[96,216],[99,198]],
-    seed:41,label:[158,215]
-  },
-  {
-    id:'mindoro',name:'MINDORO',clan:0,color:C.mindoro,
-    poly:[[244,102],[258,91],[274,95],[288,109],[292,127],[286,144],[290,160],[282,177],[269,188],[253,182],[243,168],[239,150],[242,131]],
-    seed:51,label:[267,140]
-  },
-  {
-    id:'luzon-partial',name:'LUZON',clan:0,color:C.luzon,
-    poly:[[89,-10],[122,-5],[150,7],[173,18],[195,14],[219,5],[247,12],[270,20],[284,36],[280,53],[260,61],[238,53],[216,59],[191,48],[169,52],[146,43],[128,32],[106,24],[90,17]],
-    seed:61,label:[230,27],partial:true
-  }
+  {id:'mindanao',name:'MINDANAO',clan:2,color:C.mindanao,
+   poly:[[45,36],[64,25],[91,21],[121,25],[145,38],[163,53],[184,59],[197,75],[191,92],[174,104],[160,117],[139,121],[120,113],[103,120],[85,112],[66,116],[52,104],[39,89],[35,67]],seed:11,label:[112,74]},
+  {id:'bohol',name:'BOHOL',clan:1,color:C.visayas,
+   poly:[[143,132],[158,128],[171,133],[178,143],[175,153],[164,160],[149,157],[141,149]],seed:21,label:[159,145]},
+  {id:'samar-leyte',name:'SAMAR-LEYTE',clan:1,color:C.visayas,
+   poly:[[43,184],[56,175],[70,178],[82,188],[91,199],[96,214],[91,229],[83,244],[70,253],[58,247],[50,235],[44,220],[39,204]],seed:31,label:[66,213]},
+  {id:'panay-negros-cebu',name:'PANAY-NEGROS-CEBU',clan:1,color:C.visayas2,
+   poly:[[105,178],[118,171],[133,176],[144,184],[156,181],[169,184],[182,194],[193,206],[207,210],[221,221],[218,235],[205,246],[190,242],[176,248],[160,241],[145,248],[132,239],[116,242],[104,231],[96,216],[99,198]],seed:41,label:[159,216]},
+  {id:'mindoro',name:'MINDORO',clan:0,color:C.mindoro,
+   poly:[[244,102],[258,91],[274,95],[288,109],[292,127],[286,144],[290,160],[282,177],[269,188],[253,182],[243,168],[239,150],[242,131]],seed:51,label:[267,142]},
+  {id:'luzon-partial',name:'LUZON',clan:0,color:C.luzon,
+   poly:[[89,-10],[122,-5],[150,7],[173,18],[195,14],[219,5],[247,12],[270,20],[284,36],[280,53],[260,61],[238,53],[216,59],[191,48],[169,52],[146,43],[128,32],[106,24],[90,17]],seed:61,label:[230,27],partial:true}
 ];
 
 const terrain=new Uint8Array(W*H);
-// 0 ocean,1 shallow,2 beach,3 grass,4 rice,5 forest,6 mountain,7 snow,8 river
+// 0 ocean, 1 shallow, 2 beach, 3 grass, 4 rice, 5 forest, 6 mountain, 7 snow, 8 river, 9 road
 const owner=new Int8Array(W*H);owner.fill(-1);
 
 let mountains=[],trees=[],villages=[],goldTiles=[],fishTiles=[],units=[];
+let ports=[],ships=[],containers=[];
 let clans=[];
-let viewers=1284;
-let running=false,timer=null;
+let viewers=1284,running=false,timer=null;
 let day=12.5,dayTick=0;
 let disaster=null,shake=0;
-let view={zoom:1,rot:0,tilt:1,x:0,y:0};
-let drag={on:false,shift:false,lastX:0,lastY:0};
+let view={zoom:1,x:0,y:0};
+let drag={on:false,lastX:0,lastY:0};
 
 function idx(x,y){return y*W+x}
 function inMap(x,y){return x>=0&&x<W&&y>=0&&y<H}
@@ -282,6 +266,13 @@ function pointInPoly(x,y,poly){
   }
   return inside;
 }
+function pathPoly(poly){
+  const p=new Path2D();
+  p.moveTo(poly[0][0],poly[0][1]);
+  for(let i=1;i<poly.length;i++)p.lineTo(poly[i][0],poly[i][1]);
+  p.closePath();
+  return p;
+}
 function fillPoly(poly,clan){
   const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
   const x0=Math.max(0,Math.floor(Math.min(...xs)-1)),x1=Math.min(W-1,Math.ceil(Math.max(...xs)+1));
@@ -290,9 +281,7 @@ function fillPoly(poly,clan){
     if(pointInPoly(x+.5,y+.5,poly)){terrain[idx(x,y)]=3;owner[idx(x,y)]=clan}
   }
 }
-function neighbors(x,y){
-  return [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
-}
+function neighbors(x,y){return [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]}
 function nearestLand(x,y,clan=-1){
   for(let r=0;r<12;r++){
     for(let oy=-r;oy<=r;oy++)for(let ox=-r;ox<=r;ox++){
@@ -304,58 +293,15 @@ function nearestLand(x,y,clan=-1){
   }
   return [Math.round(clamp(x,0,319)),Math.round(clamp(y,0,319))];
 }
-function drawIslandExtrusion(poly,color){
-  lctx.save();
-  lctx.translate(2,4);
-  lctx.fillStyle='rgba(2,12,17,.92)';
-  lctx.fillPoly?lctx.fillPoly(poly):null;
-  const p=new Path2D();
-  p.moveTo(poly[0][0],poly[0][1]);
-  for(let i=1;i<poly.length;i++)p.lineTo(poly[i][0],poly[i][1]);
-  p.closePath();lctx.fill(p);
-  lctx.restore();
-
-  const p2=new Path2D();
-  p2.moveTo(poly[0][0],poly[0][1]);
-  for(let i=1;i<poly.length;i++)p2.lineTo(poly[i][0],poly[i][1]);
-  p2.closePath();
-  lctx.save();
-  lctx.fillStyle=color;
-  lctx.shadowColor='rgba(255,255,255,.9)';
-  lctx.shadowBlur=2;
-  lctx.fill(p2);
-  lctx.shadowBlur=0;
-  lctx.strokeStyle='#ffffff';
-  lctx.lineWidth=1;
-  lctx.stroke(p2);
-  lctx.restore();
-}
-function makeSpriteSheet(){
-  const s=document.createElement('canvas');s.width=32*5;s.height=32;
-  const c=s.getContext('2d');c.imageSmoothingEnabled=false;
-  const colors=C.units;
-  for(let i=0;i<5;i++){
-    const ox=i*32,col=colors[i];
-    c.fillStyle='#111c18';c.fillRect(ox+12,7,8,7);
-    c.fillStyle='#f2c49f';c.fillRect(ox+13,8,6,6);
-    c.fillStyle=col;c.fillRect(ox+10,15,12,9);
-    c.fillStyle='#27412f';c.fillRect(ox+8,17,3,6);c.fillRect(ox+21,17,3,6);
-    c.fillStyle='#202d26';c.fillRect(ox+11,24,4,6);c.fillRect(ox+17,24,4,6);
-    c.fillStyle='#ffffff';c.fillRect(ox+13,16,6,1);
-  }
-  return s;
-}
-const spriteSheet=makeSpriteSheet();
 
 function initWorld(){
   terrain.fill(0);owner.fill(-1);
-  mountains=[];trees=[];villages=[];goldTiles=[];fishTiles=[];units=[];
+  mountains=[];trees=[];villages=[];goldTiles=[];fishTiles=[];units=[];ports=[];ships=[];containers=[];
   clans=['Luzon','Visayas','Mindanao'].map(name=>({name,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
 
   islands.forEach(i=>fillPoly(i.poly,i.clan));
 
-  // Partial Luzon remains clipped by the 320x320 world, exactly at the top edge.
-  // Hard-edged shallow-water belt.
+  // Shallow-water belt and beaches.
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(terrain[idx(x,y)]!==0)continue;
     let near=false;
@@ -369,49 +315,46 @@ function initWorld(){
     const k=idx(x,y);
     if(terrain[k]===3){
       let edge=false;
-      for(const[nx,ny]of neighbors(x,y)){
-        if(inMap(nx,ny)&&terrain[idx(nx,ny)]===1){edge=true;break}
-      }
+      for(const[nx,ny]of neighbors(x,y))if(inMap(nx,ny)&&terrain[idx(nx,ny)]===1){edge=true;break}
       if(edge)terrain[k]=2;
     }
   }
 
-  // Flat biome patches for performance.
-  islands.forEach(i=>{
-    const xs=i.poly.map(p=>p[0]),ys=i.poly.map(p=>p[1]);
-    for(let y=Math.max(0,Math.floor(Math.min(...ys)));y<=Math.min(319,Math.ceil(Math.max(...ys)));y++){
-      for(let x=Math.max(0,Math.floor(Math.min(...xs)));x<=Math.min(319,Math.ceil(Math.max(...xs)));x++){
-        const k=idx(x,y);
-        if(owner[k]!==i.clan||terrain[k]===0||terrain[k]===1||terrain[k]===2)continue;
-        const h=hash(x,y,i.seed);
-        if(h>.78)terrain[k]=5;
-        else if(h>.66)terrain[k]=4;
-      }
+  // Hard-edged flat biome variation.
+  islands.forEach(is=>{
+    const xs=is.poly.map(p=>p[0]),ys=is.poly.map(p=>p[1]);
+    const x0=Math.max(0,Math.floor(Math.min(...xs))),x1=Math.min(319,Math.ceil(Math.max(...xs)));
+    const y0=Math.max(0,Math.floor(Math.min(...ys))),y1=Math.min(319,Math.ceil(Math.max(...ys)));
+    for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+      const k=idx(x,y);
+      if(owner[k]!==is.clan||terrain[k]<3)continue;
+      const h=hash(x,y,is.seed);
+      if(h>.79)terrain[k]=5;
+      else if(h>.66)terrain[k]=4;
     }
   });
 
-  // Low-poly mountain positions.
   const mountainSeeds=[
-    [104,56,8,7],[139,83,7,6],[76,216,6,8],[130,211,7,8],
-    [181,219,8,7],[267,137,6,8],[178,39,8,6]
+    [104,56,8,7],[139,83,7,6],[76,216,6,8],
+    [130,211,7,8],[181,219,8,7],[267,137,6,8],[178,39,8,6]
   ];
   mountainSeeds.forEach((m,i)=>{
-    const [cx,cy,rx,ry]=m;
+    const[cx,cy,rx,ry]=m;
     const q=nearestLand(cx,cy);
     mountains.push({x:q[0],y:q[1],h:5+Math.floor(hash(i,cy,3)*4)});
     for(let y=cy-ry;y<=cy+ry;y++)for(let x=cx-rx;x<=cx+rx;x++){
       if(!inMap(x,y)||owner[idx(x,y)]<0)continue;
       const d=((x-cx)*(x-cx))/(rx*rx)+((y-cy)*(y-cy))/(ry*ry);
-      if(d<.62)terrain[idx(x,y)]=6;
-      if(d<.2)terrain[idx(x,y)]=7;
+      if(d<.6)terrain[idx(x,y)]=6;
+      if(d<.19)terrain[idx(x,y)]=7;
     }
   });
 
-  // River pixels.
+  // Rivers as pixel paths.
   const riverPaths=[
-    [[107,58],[104,72],[106,88],[101,103]],
-    [[131,208],[135,221],[142,233]],
-    [[179,218],[177,229],[168,240]]
+    [[106,59],[104,73],[106,88],[102,102]],
+    [[130,207],[135,221],[142,234]],
+    [[179,218],[177,229],[168,241]]
   ];
   for(const path of riverPaths){
     for(let j=0;j<path.length-1;j++){
@@ -429,16 +372,18 @@ function initWorld(){
     }
   }
 
-  // Forest dots.
+  // Forest and rice resource dots.
   islands.forEach((is,ii)=>{
-    const count=34+(ii%3)*8;
-    for(let n=0;n<count;n++){
-      const q=nearestLand(is.label[0]+(hash(n,ii,50)-.5)*30,is.label[1]+(hash(n,ii,51)-.5)*24,is.clan);
-      if(terrain[idx(q[0],q[1])]!==6&&terrain[idx(q[0],q[1])]!==7)trees.push({x:q[0],y:q[1]});
+    for(let n=0;n<34+(ii%3)*9;n++){
+      const q=nearestLand(
+        is.label[0]+(hash(n,ii,50)-.5)*28,
+        is.label[1]+(hash(n,ii,51)-.5)*22,
+        is.clan
+      );
+      if(terrain[idx(q[0],q[1])]!==6&&terrain[idx(q[0],q[1])]!==7)trees.push(q);
     }
   });
 
-  // Villages: 8×8 style pixel huts.
   const villageSeeds=[
     [0,89,84],[0,126,67],[0,260,142],
     [1,61,206],[1,150,216],[1,183,224],[1,159,145],
@@ -449,13 +394,38 @@ function initWorld(){
     villages.push({x:q[0],y:q[1],clan:v[0],pop:35+Math.floor(hash(i,v[0],77)*70)});
   });
 
-  // Gold / fish markers.
-  [[101,56],[141,82],[176,42],[76,216],[181,218],[268,135]].forEach(p=>{
-    goldTiles.push(nearestLand(p[0],p[1]));
-  });
-  [[28,185],[97,169],[139,128],[224,208],[297,155],[231,260]].forEach(p=>fishTiles.push(p));
+  [[101,56],[141,82],[176,42],[76,216],[181,218],[268,135]].forEach(p=>goldTiles.push(nearestLand(p[0],p[1])));
+  [[27,187],[97,169],[139,128],[224,208],[297,155],[231,260]].forEach(p=>fishTiles.push(p));
 
-  // 1100 tiny people. Each occupies one tile.
+  // Fake harbors / piers: just enough for the isometric port feel.
+  ports=[
+    {x:146,y:112,clan:0,name:'Luzon Port'},
+    {x:171,y:157,clan:1,name:'Bohol Port'},
+    {x:83,y:226,clan:1,name:'Samar Port'},
+    {x:205,y:232,clan:1,name:'Cebu Port'},
+    {x:245,y:154,clan:0,name:'Mindoro Port'},
+    {x:174,y:265,clan:2,name:'Mindanao Port'}
+  ];
+  ports=ports.map(p=>({ ...p, water:[p.x+4,p.y+5] }));
+
+  for(let i=0;i<22;i++){
+    const p=ports[i%ports.length];
+    containers.push({
+      x:p.x+(i%4)*2,
+      y:p.y+(Math.floor(i/4)%3)*2,
+      z:(i%3)*1.1,
+      color:C.container[i%C.container.length]
+    });
+  }
+
+  const shipPaths=[
+    [[150,113],[184,128]],[[80,228],[125,206]],[[205,235],[228,206]],
+    [[248,156],[214,167]],[[176,267],[222,250]],[[136,119],[105,151]],
+    [[73,220],[106,187]],[[216,231],[178,249]]
+  ];
+  shipPaths.forEach((path,i)=>ships.push({path,phase:i*.13,speed:.008+i*.0015}));
+
+  // 1100 tiny chibi people: one logical tile = one person.
   for(let c=0;c<3;c++){
     const owned=islands.filter(i=>i.clan===c&&!i.partial);
     for(let n=0;n<Math.floor(UNIT_COUNT/3);n++){
@@ -470,104 +440,290 @@ function initWorld(){
         const yy=Math.floor(minY+hash(n,t,160+c)*(maxY-minY+1));
         if(inMap(xx,yy)&&owner[idx(xx,yy)]===c&&terrain[idx(xx,yy)]>=2){x=xx;y=yy;break}
       }
-      units.push({x,y,clan:c,phase:hash(n,c,300)*6.28,dx:0,dy:0});
+      units.push({x,y,clan:c,phase:hash(n,c,300)*6.28});
     }
   }
 
-  rebuildLayer();
-  drawMini();
-  updateUI();
+  rebuildLayer();drawMini();updateUI();
 }
 
 function drawTile(x,y,c){
-  const col=c===0?C.ocean:c===1?C.shallow:c===2?C.beach:c===3?C.grass:c===4?C.rice:c===5?C.forest:c===6?C.mountain:c===7?C.snow:c===8?C.river:C.grass;
+  const col=c===0?C.ocean:c===1?C.shallow:c===2?C.beach:c===3?C.grass:c===4?C.rice:c===5?C.forest:c===6?C.mountain:c===7?C.snow:c===8?C.river:c===9?C.road:C.grass;
   lctx.fillStyle=col;lctx.fillRect(x,y,1,1);
-  if(c===5&&hash(x,y,800)>.54){lctx.fillStyle='#254a30';lctx.fillRect(x,y,1,1)}
-  if(c===4&&hash(x,y,801)>.58){lctx.fillStyle='#c7df85';lctx.fillRect(x,y,1,1)}
+  if(c===5&&hash(x,y,800)>.55){lctx.fillStyle='#24482f';lctx.fillRect(x,y,1,1)}
+  if(c===4&&hash(x,y,801)>.58){lctx.fillStyle='#c8dd85';lctx.fillRect(x,y,1,1)}
 }
-function path2(poly){
-  const p=new Path2D();p.moveTo(poly[0][0],poly[0][1]);
-  for(let i=1;i<poly.length;i++)p.lineTo(poly[i][0],poly[i][1]);p.closePath();return p;
+function drawPixelLine(a,b,color){
+  let x0=Math.round(a[0]),y0=Math.round(a[1]),x1=Math.round(b[0]),y1=Math.round(b[1]);
+  const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+  let err=dx-dy;
+  while(true){
+    if(inMap(x0,y0)&&terrain[idx(x0,y0)]>=2){lctx.fillStyle=color;lctx.fillRect(x0,y0,1,1)}
+    if(x0===x1&&y0===y1)break;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x0+=sx}
+    if(e2<dx){err+=dx;y0+=sy}
+  }
 }
 function rebuildLayer(){
   lctx.fillStyle=C.ocean;lctx.fillRect(0,0,W,H);
-
-  // shallow water ring
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)drawTile(x,y,terrain[idx(x,y)]);
 
-  // Low-poly 3D island extrusion + white glow outline.
-  islands.forEach(is=>{
-    const p=path2(is.poly);
-    lctx.save();
-    lctx.translate(2,4);
-    lctx.fillStyle='rgba(0,12,16,.95)';
-    lctx.fill(p);
-    lctx.restore();
-
-    lctx.save();
-    lctx.fillStyle=is.color;lctx.shadowColor='#ffffff';lctx.shadowBlur=2;lctx.fill(p);
-    lctx.shadowBlur=0;lctx.strokeStyle='#ffffff';lctx.lineWidth=1;lctx.stroke(p);
-    lctx.restore();
+  // Reef rings around fishing grounds.
+  fishTiles.forEach(([x,y])=>{
+    lctx.fillStyle='#47e1d7';
+    lctx.fillRect(x-1,y,1,1);lctx.fillRect(x+1,y,1,1);
+    lctx.fillRect(x,y-1,1,1);lctx.fillRect(x,y+1,1,1);
   });
 
-  // Repaint pixel biomes above flat polygon fill.
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    const c=terrain[idx(x,y)];
-    if(c>=2)drawTile(x,y,c);
-  }
+  // Pixel roads.
+  const roads=[
+    [[91,83],[113,87],[136,83],[155,96]],
+    [[140,149],[156,157],[177,157],[193,169]],
+    [[161,220],[178,224],[198,229],[215,226]]
+  ];
+  roads.forEach(path=>{for(let i=0;i<path.length-1;i++)drawPixelLine(path[i],path[i+1],C.road)});
 
-  // Pixel shoreline and white rim.
+  // Coastline pixel glint.
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const k=idx(x,y);
     if(terrain[k]<2)continue;
-    let edge=false;
-    for(const[nx,ny]of neighbors(x,y))if(inMap(nx,ny)&&terrain[idx(nx,ny)]<=1){edge=true;break}
-    if(edge){
-      lctx.fillStyle='#ffffff';
-      lctx.fillRect(x,y,1,1);
-      if(inMap(x+1,y+1))lctx.fillStyle='rgba(3,16,21,.55)',lctx.fillRect(x+1,y+1,1,1);
+    for(const[nx,ny]of neighbors(x,y)){
+      if(inMap(nx,ny)&&terrain[idx(nx,ny)]<=1){
+        lctx.fillStyle='#f7f6de';lctx.fillRect(x,y,1,1);break;
+      }
+    }
+  }
+}
+
+function fitScale(w,h){
+  return Math.max(.55,Math.min((w-18)/1024,(h-18)/512));
+}
+function isoTransform(target,w,h,scale){
+  target.translate(w/2+view.x,h/2+view.y);
+  const a=ISO_TILE_X*scale*view.zoom/2;
+  const b=ISO_TILE_Y*scale*view.zoom/2;
+  target.transform(a,b,-a,b,0,0);
+  target.translate(-160,-160);
+}
+const ISO_TILE_X=3.2,ISO_TILE_Y=1.6;
+
+function isoPoint(x,y,z=0,w=mapCanvas.clientWidth,h=mapCanvas.clientHeight,scale=fitScale(w,h)){
+  const s=scale*view.zoom;
+  return [
+    w/2+view.x+(x-y)*ISO_TILE_X*s/2,
+    h/2+view.y+(x+y-320)*ISO_TILE_Y*s/2-z*ISO_TILE_Y*s
+  ];
+}
+function drawIsoPoly(target,poly,fill,stroke='#fff',shadowY=0,w=target.canvas.width,h=target.canvas.height,scale=fitScale(w,h)){
+  const pts=poly.map(([x,y])=>isoPoint(x,y,0,w,h,scale));
+  target.save();
+  if(shadowY){target.translate(0,shadowY)}
+  target.beginPath();target.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)target.lineTo(pts[i][0],pts[i][1]);target.closePath();
+  if(fill){target.fillStyle=fill;target.fill()}
+  if(stroke){target.strokeStyle=stroke;target.stroke()}
+  target.restore();
+}
+function drawIsoLine(target,points,color,width=1){
+  target.beginPath();
+  points.forEach((p,i)=>{const q=isoPoint(p[0],p[1],p[2]||0,target.canvas.width,target.canvas.height,fitScale(target.canvas.width,target.canvas.height));i?target.lineTo(q[0],q[1]):target.moveTo(q[0],q[1])});
+  target.strokeStyle=color;target.lineWidth=width;target.stroke();
+}
+function drawMountain(target,m,w,h,scale){
+  const base=isoPoint(m.x,m.y,0,w,h,scale);
+  const top=isoPoint(m.x,m.y,m.h,w,h,scale);
+  const left=isoPoint(m.x-3,m.y,0,w,h,scale);
+  const right=isoPoint(m.x+3,m.y,0,w,h,scale);
+  const back=isoPoint(m.x,m.y-3,0,w,h,scale);
+  const front=isoPoint(m.x,m.y+3,0,w,h,scale);
+
+  target.fillStyle='#3f4746';
+  target.beginPath();target.moveTo(base[0]+2,base[1]+6);target.lineTo(top[0]+2,top[1]+4);target.lineTo(right[0]+4,right[1]+4);target.closePath();target.fill();
+
+  target.fillStyle=C.mountain;
+  target.beginPath();target.moveTo(left[0],left[1]);target.lineTo(top[0],top[1]);target.lineTo(back[0],back[1]);target.closePath();target.fill();
+  target.fillStyle='#5c5b57';
+  target.beginPath();target.moveTo(back[0],back[1]);target.lineTo(top[0],top[1]);target.lineTo(right[0],right[1]);target.closePath();target.fill();
+
+  if(m.h>7){
+    target.fillStyle=C.snow;
+    target.beginPath();target.moveTo(top[0],top[1]);target.lineTo(top[0]+5,top[1]+m.h*.7);target.lineTo(top[0]-4,top[1]+m.h*.7);target.closePath();target.fill();
+  }
+}
+function drawTree(target,t,w,h,scale){
+  const p=isoPoint(t.x,t.y,0,w,h,scale);
+  target.fillStyle='#1e3b28';target.fillRect(Math.round(p[0]-2),Math.round(p[1]-4),3,4);
+  target.fillStyle='#4f9451';target.fillRect(Math.round(p[0]-3),Math.round(p[1]-6),5,4);
+  target.fillStyle='#2f7040';target.fillRect(Math.round(p[0]-2),Math.round(p[1]-8),3,3);
+}
+function drawVillage(target,v,w,h,scale){
+  const p=isoPoint(v.x,v.y,0,w,h,scale);
+  const s=Math.max(.7,scale*view.zoom);
+  const x=p[0],y=p[1];
+  target.fillStyle='#513c2b';target.fillRect(Math.round(x-4*s),Math.round(y-1*s),Math.round(8*s),Math.round(5*s));
+  target.fillStyle='#d9c38a';target.fillRect(Math.round(x-3*s),Math.round(y),Math.round(6*s),Math.round(4*s));
+  target.fillStyle=C.units[v.clan];target.fillRect(Math.round(x-1*s),Math.round(y-5*s),Math.max(1,Math.round(2*s)),Math.max(1,Math.round(2*s)));
+}
+function drawContainers(target,now,w,h,scale){
+  containers.forEach(c=>{
+    const p=isoPoint(c.x,c.y,c.z,w,h,scale);
+    const s=Math.max(.55,scale*view.zoom);
+    target.fillStyle='#29383b';
+    target.fillRect(Math.round(p[0]-2*s),Math.round(p[1]-2*s),Math.max(1,Math.round(4*s)),Math.max(1,Math.round(2*s)));
+    target.fillStyle=c.color;
+    target.fillRect(Math.round(p[0]-1*s),Math.round(p[1]-3*s),Math.max(1,Math.round(3*s)),Math.max(1,Math.round(2*s)));
+  });
+}
+function drawPorts(target,w,h,scale){
+  ports.forEach(p=>{
+    const land=isoPoint(p.x,p.y,0,w,h,scale),water=isoPoint(p.water[0],p.water[1],0,w,h,scale);
+    target.strokeStyle='#c4aa78';target.lineWidth=Math.max(1,scale*view.zoom);
+    target.beginPath();target.moveTo(land[0],land[1]);target.lineTo(water[0],water[1]);target.stroke();
+    target.fillStyle='#9a7a4d';
+    target.fillRect(Math.round(water[0]-2),Math.round(water[1]-1),Math.max(2,Math.round(5*scale)),Math.max(1,Math.round(2*scale)));
+  });
+}
+function drawShip(target,s,w,h,scale,now){
+  const [a,b]=s.path;
+  const u=(now*.001*s.speed*60+s.phase)%1;
+  const x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u;
+  const p=isoPoint(x,y,.5,w,h,scale);
+  const ang=Math.atan2((b[1]-a[1])*ISO_TILE_Y,(b[0]-a[0])*ISO_TILE_X);
+  const len=Math.max(5,scale*view.zoom*10),wid=Math.max(2,scale*view.zoom*4);
+  target.save();target.translate(p[0],p[1]);target.rotate(ang);
+  target.fillStyle='rgba(0,0,0,.35)';target.fillRect(-len*.55,wid*.7,len,wid);
+  target.fillStyle=C.shipDark;target.fillRect(-len*.55,-wid*.5,len,wid);
+  target.fillStyle=C.ship;target.fillRect(-len*.35,-wid*.9,len*.55,Math.max(1,wid*.55));
+  target.fillStyle='#f1d98b';target.fillRect(len*.18,-wid*1.8,Math.max(1,scale*view.zoom),Math.max(1,scale*view.zoom));
+  target.strokeStyle='#eee';target.lineWidth=1;target.beginPath();target.moveTo(len*.18,-wid*1.8);target.lineTo(len*.18,wid*.2);target.stroke();
+  target.restore();
+}
+function drawUnits(target,w,h,scale,now){
+  const t=now*.001;
+  units.forEach(u=>{
+    const bob=Math.sin(t*4+u.phase)*.25;
+    const p=isoPoint(u.x,u.y,.55+bob,w,h,scale);
+    const r=Math.max(1,Math.min(3,scale*view.zoom*1.35));
+    target.fillStyle='rgba(0,0,0,.35)';target.fillRect(Math.round(p[0]-r),Math.round(p[1]+r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*.55)));
+    target.fillStyle=C.units[u.clan];target.fillRect(Math.round(p[0]-r),Math.round(p[1]-r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*1.5)));
+    target.fillStyle='#f3c6a1';target.fillRect(Math.round(p[0]),Math.round(p[1]-r*1.3),Math.max(1,Math.round(r)),Math.max(1,Math.round(r)));
+  });
+}
+function drawFish(target,now,w,h,scale){
+  const t=now*.001;
+  fishTiles.forEach((p,i)=>{
+    const dx=Math.round(Math.sin(t*1.5+i)*1.5),dy=Math.round(Math.cos(t*1.2+i));
+    const q=isoPoint(p[0]+dx,p[1]+dy,.15,w,h,scale);
+    target.fillStyle=C.fish;target.fillRect(Math.round(q[0]),Math.round(q[1]),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
+  });
+}
+function drawGold(target,now,w,h,scale){
+  const t=now*.001;
+  goldTiles.forEach((g,i)=>{
+    const p=isoPoint(g[0],g[1],.2,w,h,scale);
+    const on=Math.sin(t*5+g[0]+g[1]+i)>.15;
+    target.fillStyle=on?'#fff0a0':C.gold;
+    target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
+  });
+}
+function drawIslandOutlines(target,w,h,scale){
+  islands.forEach(is=>{
+    drawIsoPoly(target,is.poly,null,'#fff');
+  });
+}
+function drawDynamicWorld(target,w,h,now,exportMode=false){
+  const scale=fitScale(w,h);
+  target.imageSmoothingEnabled=false;
+  target.fillStyle=C.ocean;
+  target.fillRect(0,0,w,h);
+
+  // Dark extrusion/drop shadows under each island — isometric depth without realistic textures.
+  islands.forEach(is=>{
+    drawIsoPoly(target,is.poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*view.zoom),w,h,scale);
+  });
+
+  // Flat pixel world.
+  target.drawImage(layer,0,0);
+
+  // White glow/outline over each island edge.
+  target.save();
+  target.shadowColor='#ffffff';
+  target.shadowBlur=Math.max(1,2.4*scale*view.zoom);
+  drawIslandOutlines(target,w,h,scale);
+  target.restore();
+
+  // Mountains, forests, ports, containers, villages, ships, gold, fish, people.
+  mountains.forEach(m=>drawMountain(target,m,w,h,scale));
+  trees.forEach(t=>drawTree(target,t,w,h,scale));
+  drawPorts(target,w,h,scale);
+  drawContainers(target,now,w,h,scale);
+  villages.forEach(v=>drawVillage(target,v,w,h,scale));
+  ships.forEach(s=>drawShip(target,s,w,h,scale,now));
+  drawGold(target,now,w,h,scale);
+  drawFish(target,now,w,h,scale);
+  drawUnits(target,w,h,scale,now);
+
+  // Island labels: tiny strategy-map labels.
+  if(!exportMode){
+    target.save();
+    target.font='900 8px monospace';
+    target.textAlign='center';
+    target.textBaseline='middle';
+    islands.forEach(is=>{
+      const p=isoPoint(is.label[0],is.label[1],.3,w,h,scale);
+      target.fillStyle='rgba(0,0,0,.7)';target.fillText(is.name,p[0]+1,p[1]+1);
+      target.fillStyle='#fff';target.fillText(is.name,p[0],p[1]);
+    });
+    target.restore();
+  }
+
+  if(disaster){
+    const pulse=(Math.sin(now*.01)+1)/2;
+    const q=isoPoint(disaster.x,disaster.y,1,w,h,scale);
+    target.fillStyle=disaster.type==='Volcano'?'#f26324':'#f0c55f';
+    for(let i=0;i<24;i++){
+      const a=i*.85+now*.002,r=(2+i*.35)*scale*view.zoom;
+      target.fillRect(Math.round(q[0]+Math.cos(a)*r),Math.round(q[1]+Math.sin(a)*r),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
+    }
+    if(pulse>.55){target.fillStyle='rgba(255,255,255,.24)';target.fillRect(q[0]-8,q[1]-8,16,16)}
+  }
+
+  // Simple night overlay.
+  const daylight=Math.max(0,Math.sin((day-6)/12*Math.PI));
+  const night=1-daylight;
+  if(night>.08){
+    target.fillStyle='rgba(6,17,30,'+(0.08+night*.30)+')';
+    target.fillRect(0,0,w,h);
+    if(night>.58){
+      villages.forEach(v=>{
+        const p=isoPoint(v.x,v.y,1,w,h,scale);
+        target.fillStyle='#ffd66a';target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale*view.zoom)),Math.max(1,Math.round(scale*view.zoom)));
+      });
     }
   }
 
-  // Forest dots.
-  trees.forEach(t=>{
-    lctx.fillStyle='#1f4b2d';lctx.fillRect(t.x,t.y,2,2);
-    lctx.fillStyle='#4b8b4e';lctx.fillRect(t.x,t.y,1,1);
-  });
-
-  // Mountains: simple low-poly triangles, shadow + snow cap.
-  mountains.forEach((m,i)=>{
-    const x=m.x,y=m.y;
-    lctx.fillStyle='#4c4a45';
-    lctx.beginPath();lctx.moveTo(x+1,y+1);lctx.lineTo(x+5,y-m.h+3);lctx.lineTo(x+9,y+1);lctx.closePath();lctx.fill();
-    lctx.fillStyle=C.mountain;
-    lctx.beginPath();lctx.moveTo(x,y);lctx.lineTo(x+4,y-m.h);lctx.lineTo(x+8,y);lctx.closePath();lctx.fill();
-    if(m.h>7){lctx.fillStyle=C.snow;lctx.beginPath();lctx.moveTo(x+2,y-3);lctx.lineTo(x+4,y-m.h);lctx.lineTo(x+6,y-3);lctx.closePath();lctx.fill()}
-  });
-
-  // Villages: tiny 8×8 pixel huts.
-  villages.forEach(v=>{
-    lctx.fillStyle='#593e2c';lctx.fillRect(v.x-3,v.y-1,7,5);
-    lctx.fillStyle='#d7bd7e';lctx.fillRect(v.x-2,v.y,5,4);
-    lctx.fillStyle=C.units[v.clan];lctx.fillRect(v.x,v.y-4,1,2);lctx.fillRect(v.x-2,v.y-2,5,2);
-  });
-
-  // Gold markers.
-  goldTiles.forEach(g=>{
-    lctx.fillStyle='#775d26';lctx.fillRect(g[0],g[1],2,2);
-    lctx.fillStyle=C.gold;lctx.fillRect(g[0]+1,g[1],1,1);
-  });
-
-  drawLegendPixels();
+  if(!exportMode){
+    target.strokeStyle='rgba(255,255,255,.10)';
+    target.strokeRect(1,1,w-2,h-2);
+  }
 }
-function drawLegendPixels(){
-  // subtle tile grid only at high zoom, avoiding heavy lines.
+function drawFrame(now){
+  const w=mapCanvas.clientWidth,h=mapCanvas.clientHeight;
+  ctx.clearRect(0,0,w,h);
+  if(shake>0){
+    ctx.save();
+    ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+    drawDynamicWorld(ctx,w,h,now,false);
+    ctx.restore();
+  }else drawDynamicWorld(ctx,w,h,now,false);
 }
+
 function drawMini(){
   const w=mini.clientWidth||120,h=mini.clientHeight||120,dpr=Math.min(2,devicePixelRatio||1);
   mini.width=Math.floor(w*dpr);mini.height=Math.floor(h*dpr);
   mctx.setTransform(dpr,0,0,dpr,0,0);mctx.imageSmoothingEnabled=false;
   mctx.fillStyle=C.ocean;mctx.fillRect(0,0,w,h);
+  // Mini-map uses the original top-down tile layer so the whole 320×320 world is readable.
   mctx.drawImage(layer,0,0,320,320,0,0,w,h);
   mctx.strokeStyle='#bfe9c2';mctx.strokeRect(0,0,w,h);
 }
@@ -576,97 +732,9 @@ function resize(){
   const dpr=Math.min(2,devicePixelRatio||1);
   mapCanvas.width=Math.max(1,Math.floor(mapCanvas.clientWidth*dpr));
   mapCanvas.height=Math.max(1,Math.floor(mapCanvas.clientHeight*dpr));
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.imageSmoothingEnabled=false;
-  drawFrame(performance.now());
-  drawMini();
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=false;
+  drawFrame(performance.now());drawMini();
 }
-function baseScale(w,h){return Math.min(w,h)/320}
-function transformPoint(x,y,w,h,scale=baseScale(mapCanvas.clientWidth,mapCanvas.clientHeight)){
-  const cx=w/2,cy=h/2;
-  let dx=(x-160+view.x)*scale*view.zoom;
-  let dy=(y-160+view.y)*scale*view.zoom*view.tilt;
-  const ca=Math.cos(view.rot),sa=Math.sin(view.rot);
-  const rx=dx*ca-dy*sa,ry=dx*sa+dy*ca;
-  return [cx+rx,cy+ry];
-}
-function drawDynamicWorld(targetCtx,w,h,now,exportMode=false){
-  const scale=baseScale(w,h);
-  const cx=w/2,cy=h/2;
-  targetCtx.save();
-  targetCtx.translate(cx,cy);
-  targetCtx.rotate(view.rot);
-  targetCtx.scale(scale*view.zoom,scale*view.zoom*view.tilt);
-  targetCtx.translate(-160+view.x,-160+view.y);
-
-  // static world layer
-  targetCtx.drawImage(layer,0,0);
-
-  // fish: moving 1-pixel sprites in shallow water
-  const t=now*.001;
-  fishTiles.forEach((p,i)=>{
-    const dx=Math.round(Math.sin(t*1.6+i)*1.3),dy=Math.round(Math.cos(t*1.2+i)*.8);
-    targetCtx.fillStyle=C.fish;targetCtx.fillRect(p[0]+dx,p[1]+dy,1,1);
-    targetCtx.fillStyle='#1f6070';targetCtx.fillRect(p[0]+dx-1,p[1]+dy,1,1);
-  });
-
-  // gold glints
-  goldTiles.forEach((g,i)=>{
-    if(Math.sin(t*5+g[0]+g[1])>.2){
-      targetCtx.fillStyle=i%2?'#fff0a0':C.gold;targetCtx.fillRect(g[0],g[1],1,1);
-    }
-  });
-
-  // Units: tiny pixel people; one tile = one person.
-  const spriteSize=exportMode?2.3:(1.55/Math.max(1,view.zoom)+1.25);
-  units.forEach(u=>{
-    const sx=Math.round((u.x+0.35)*1),sy=Math.round((u.y+0.15)*1);
-    const sw=spriteSize,sh=spriteSize;
-    const col=u.clan;
-    const sourceX=col*32;
-    targetCtx.drawImage(spriteSheet,sourceX,0,32,32,sx-(sw/2),sy-sh*.7,sw,sh);
-  });
-
-  // Disasters.
-  if(disaster){
-    targetCtx.fillStyle=disaster.type==='Volcano'?'#f26324':'#eec25d';
-    for(let i=0;i<28;i++){
-      const xx=Math.round(disaster.x+Math.cos(i*1.9+t*2)*disaster.radius);
-      const yy=Math.round(disaster.y+Math.sin(i*1.7+t*2)*disaster.radius);
-      targetCtx.fillRect(xx,yy,1,1);
-    }
-  }
-  targetCtx.restore();
-
-  // Simple tilt shadow underneath the whole playfield makes the low-poly scene read as 3D.
-  if(!exportMode){
-    targetCtx.save();
-    targetCtx.strokeStyle='rgba(255,255,255,.10)';
-    targetCtx.strokeRect(1,1,w-2,h-2);
-    targetCtx.restore();
-  }
-}
-function drawFrame(now){
-  const w=mapCanvas.clientWidth,h=mapCanvas.clientHeight;
-  ctx.clearRect(0,0,w,h);
-  ctx.fillStyle=C.ocean;ctx.fillRect(0,0,w,h);
-
-  if(shake>0){
-    ctx.save();ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-    drawDynamicWorld(ctx,w,h,now,false);ctx.restore();
-  }else drawDynamicWorld(ctx,w,h,now,false);
-
-  if(view.zoom>1.65){
-    ctx.save();
-    ctx.globalAlpha=.08;
-    ctx.strokeStyle='#ffffff';
-    const s=baseScale(w,h)*view.zoom;
-    const step=Math.max(1,s);
-    for(let i=-20;i<340;i++)ctx.fillRect((w/2)+(i-160)*s,0,.4,h);
-    ctx.restore();
-  }
-}
-
 function updateUI(){
   const members=clans.reduce((a,c)=>a+c.members,0);
   document.getElementById('goldUI').textContent=(2450+clans.reduce((a,c)=>a+c.points,0)).toLocaleString();
@@ -702,12 +770,9 @@ function gift(n){
   const i=+document.getElementById('clan').value,c=clans[i],old=c.members;
   c.members=Math.min(400,c.members+n);
   const added=c.members-old;
-  c.points+=n*10;
-  c.villages=Math.min(99,c.villages+Math.floor(n/25));
-  c.leader='Top Contributor';
+  c.points+=n*10;c.villages=Math.min(99,c.villages+Math.floor(n/25));c.leader='Top Contributor';
   log('🎁 '+c.name+' received +'+added+' members and +'+(n*10)+' contribution.');
-  alertWorld('🎁 '+c.name.toUpperCase()+' +'+added);
-  updateUI();
+  alertWorld('🎁 '+c.name.toUpperCase()+' +'+added);updateUI();
 }
 function randomEvent(){
   const i=Math.floor(Math.random()*3);
@@ -720,35 +785,35 @@ function triggerDisaster(){
   const labels=['🌎 EARTHQUAKE','🌀 TYPHOON','🌊 TSUNAMI','🌋 VOLCANIC ERUPTION','🔥 WILDFIRE'];
   const i=Math.floor(Math.random()*types.length);
   const p=i===3?[181,42]:i===4?[104,79]:i===1||i===2?[205,210]:[150,160];
-  disaster={type:types[i],x:p[0],y:p[1],radius:6,life:0};
+  disaster={type:types[i],x:p[0],y:p[1],life:0,radius:6};
   shake=i===0?4:1.5;
   log(labels[i]+' has struck the world!');alertWorld(labels[i]+'!');
   document.getElementById('status').textContent='⚠ Disaster: '+types[i];
   setTimeout(()=>{disaster=null;document.getElementById('status').textContent=running?'World is evolving…':'World paused.'},6500);
 }
 function resetWorld(){
-  clearInterval(timer);running=false;timer=null;view={zoom:1,rot:0,tilt:1,x:0,y:0};day=12.5;viewers=1284;disaster=null;shake=0;
-  document.getElementById('start').textContent='▶ Start';document.getElementById('status').textContent='World paused.';
+  clearInterval(timer);running=false;timer=null;
+  view={zoom:1,x:0,y:0};day=12.5;viewers=1284;disaster=null;shake=0;
+  document.getElementById('start').textContent='▶ Start';
+  document.getElementById('status').textContent='World paused.';
   document.getElementById('events').innerHTML='';
   initWorld();
   log('🌏 Separate Philippine islands created: Luzon, Visayas and Mindanao');
-  log('🗺 320×320 LARGE map generated with 5 primary island zones + partial Luzon.');
+  log('🗺 Isometric 2D 320×320 LARGE map generated — 102,400 tiles.');
+  log('🚢 Fake ports, moving ships and stacked containers are ready.');
   log('👥 1,100 pixel villagers spawned — one tile = one person.');
   alertWorld('🌏 WORLD RESET');updateUI();
 }
 function stepUnits(){
-  // Each active person moves exactly one tile per frame when a valid clan tile is found.
   for(const u of units){
+    if(hash(u.x,u.y,dayTick++)>.72)continue;
     const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-    let moved=false;
-    for(let tries=0;tries<5;tries++){
-      const d=dirs[Math.floor(Math.random()*dirs.length)];
+    const start=Math.floor(hash(u.x,u.y,u.clan+dayTick)*4);
+    for(let tries=0;tries<4;tries++){
+      const d=dirs[(start+tries)%4];
       const nx=u.x+d[0],ny=u.y+d[1];
-      if(inMap(nx,ny)&&owner[idx(nx,ny)]===u.clan&&terrain[idx(nx,ny)]>=2){
-        u.x=nx;u.y=ny;u.dx=d[0];u.dy=d[1];moved=true;break;
-      }
+      if(inMap(nx,ny)&&owner[idx(nx,ny)]===u.clan&&terrain[idx(nx,ny)]>=2){u.x=nx;u.y=ny;break}
     }
-    if(!moved){u.dx=0;u.dy=0}
   }
 }
 function tick(){
@@ -764,44 +829,35 @@ function tick(){
   if(shake>0)shake*=.8;
   updateUI();
 }
-
-function setZoom(next){
-  view.zoom=clamp(next,.7,4.5);
-}
-function resetView(){
-  view={zoom:1,rot:0,tilt:1,x:0,y:0};
-}
+function setZoom(next){view.zoom=clamp(next,.65,3.8)}
+function resetView(){view={zoom:1,x:0,y:0}}
 function downloadBlob(blob,name){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
 }
 function exportJSON(){
   const data={
     game:'CLANWORLD PH',version:'1.0',
-    map:{width:W,height:H,tiles:W*H,zone:'5x5',tileFormula:'zone×64'},
-    style:'Original fake pixel + low-poly 3D island simulation',
+    map:{width:W,height:H,tiles:W*H,zone:'5x5',tileFormula:'zone×64',projection:'isometric-2D'},
+    style:'Original fake pixel + isometric low-poly 2D strategy simulation',
     islands:islands.map(i=>({id:i.id,name:i.name,clan:i.clan,color:i.color,poly:i.poly,partial:!!i.partial})),
-    terrain:Array.from(terrain),
-    owner:Array.from(owner),
-    villages,villagers:units.map(u=>({x:u.x,y:u.y,clan:u.clan})),
+    terrain:Array.from(terrain),owner:Array.from(owner),
+    villages,ports,ships,containers,
+    villagers:units.map(u=>({x:u.x,y:u.y,clan:u.clan})),
     resources:{gold:goldTiles,fish:fishTiles},
     clans
   };
-  downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'clanworld-ph-320x320.json');
+  downloadBlob(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),'clanworld-ph-320x320-isometric.json');
   log('⬇ JSON map data exported.');
 }
 function exportPNG(){
   const out=document.createElement('canvas');out.width=4096;out.height=4096;
   const oc=out.getContext('2d',{alpha:false});oc.imageSmoothingEnabled=false;
+  const old={...view};view={zoom:1,x:0,y:0};
   oc.fillStyle=C.ocean;oc.fillRect(0,0,4096,4096);
-  const old={...view};
-  view={...view,x:0,y:0};
   drawDynamicWorld(oc,4096,4096,performance.now(),true);
   view=old;
-  out.toBlob(blob=>{
-    if(blob){downloadBlob(blob,'clanworld-ph-4k-map.png');log('🖼 4K PNG map exported (4096×4096).')}
-  },'image/png');
+  out.toBlob(blob=>{if(blob){downloadBlob(blob,'clanworld-ph-4k-isometric-map.png');log('🖼 4K PNG map exported (4096×4096).')}},'image/png');
 }
 
 document.querySelectorAll('.gift').forEach(b=>b.addEventListener('click',()=>gift(+b.dataset.add)));
@@ -809,13 +865,8 @@ document.getElementById('start').addEventListener('click',()=>{
   running=!running;
   document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';
   document.getElementById('status').textContent=running?'World is evolving…':'World paused.';
-  if(running){
-    timer=setInterval(tick,16);
-    log('🔴 Simulation started — 1 tile per frame movement.');
-    alertWorld('🔴 SIMULATION LIVE');
-  }else{
-    clearInterval(timer);timer=null;log('⏸ Simulation paused.');
-  }
+  if(running){timer=setInterval(tick,16);log('🔴 Simulation started — one tile-step per update.');alertWorld('🔴 SIMULATION LIVE')}
+  else{clearInterval(timer);timer=null;log('⏸ Simulation paused.')}
 });
 document.getElementById('event').addEventListener('click',randomEvent);
 document.getElementById('disaster').addEventListener('click',triggerDisaster);
@@ -831,27 +882,24 @@ document.querySelectorAll('.navbtn').forEach((b,i)=>{
   });
 });
 
+// Isometric 2D controls: drag pans, wheel and W/S zoom.
 mapCanvas.addEventListener('pointerdown',e=>{
-  drag.on=true;drag.shift=e.shiftKey;drag.lastX=e.clientX;drag.lastY=e.clientY;
+  drag.on=true;drag.lastX=e.clientX;drag.lastY=e.clientY;
   mapCanvas.classList.add('dragging');mapCanvas.setPointerCapture(e.pointerId);
 });
 mapCanvas.addEventListener('pointermove',e=>{
   if(!drag.on)return;
-  const dx=e.clientX-drag.lastX,dy=e.clientY-drag.lastY;
-  if(drag.shift){
-    const s=baseScale(mapCanvas.clientWidth,mapCanvas.clientHeight)*view.zoom;
-    view.x+=dx/s;view.y+=dy/(s*view.tilt);
-  }else{
-    view.rot=clamp(view.rot+dx*.006,-.42,.42);
-    view.tilt=clamp(view.tilt-dy*.002,.76,1.12);
-  }
+  view.x+=e.clientX-drag.lastX;view.y+=e.clientY-drag.lastY;
   drag.lastX=e.clientX;drag.lastY=e.clientY;
 });
 mapCanvas.addEventListener('pointerup',e=>{
-  drag.on=false;mapCanvas.classList.remove('dragging');try{mapCanvas.releasePointerCapture(e.pointerId)}catch(_){}
+  drag.on=false;mapCanvas.classList.remove('dragging');
+  try{mapCanvas.releasePointerCapture(e.pointerId)}catch(_){}
 });
 mapCanvas.addEventListener('pointercancel',()=>{drag.on=false;mapCanvas.classList.remove('dragging')});
-mapCanvas.addEventListener('wheel',e=>{e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:.89))},{passive:false});
+mapCanvas.addEventListener('wheel',e=>{
+  e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:.89));
+},{passive:false});
 
 document.getElementById('zoomIn').addEventListener('click',()=>setZoom(view.zoom*1.25));
 document.getElementById('zoomOut').addEventListener('click',()=>setZoom(view.zoom*.8));
@@ -868,15 +916,13 @@ window.addEventListener('resize',resize);
 
 initWorld();
 log('🌏 Separate Philippine islands created: Luzon, Visayas and Mindanao');
-log('🗺 320×320 LARGE map ready — 102,400 tiles.');
+log('🗺 Isometric 2D map loaded — 320×320 LARGE / 102,400 tiles.');
+log('🚢 Fake ports, ships and container stacks are visible.');
 log('👥 1,100 pixel villagers ready.');
 resize();
 
-function animate(now){
-  requestAnimationFrame(animate);
-  drawFrame(now);
-}
-animate(performance.now());
+function animate(now){requestAnimationFrame(animate);drawFrame(now)}
+requestAnimationFrame(animate);
 </script>
 </body>
 </html>
