@@ -173,6 +173,7 @@ select{width:100%;margin:7px 0}
       <button class="zoomBtn" id="zoomOut" aria-label="Zoom out">−</button>
       <button class="zoomBtn fitBtn" id="zoomReset" aria-label="Reset zoom">1:1</button>
     </div>
+    <div id="zoomReadout" style="position:absolute;right:122px;bottom:51px;padding:5px 7px;background:#09231feF;border:1px solid #50716a;border-radius:4px;font-size:8px;font-weight:1000;color:#e8f3e5">100%</div>
 
     <div class="help">DRAG = PAN · W/S or +/− = ZOOM · 0 = RESET · ISOMETRIC 45°</div>
 
@@ -251,7 +252,10 @@ let clans=[];
 let viewers=null,running=false,timer=null;
 let day=12.5,dayTick=0;
 let disaster=null,shake=0;
-let view={zoom:1,x:0,y:0};
+let zoom=1;
+const minZoom=0.5;
+const maxZoom=3;
+let view={x:0,y:0};
 let drag={on:false,lastX:0,lastY:0};
 
 function idx(x,y){return y*W+x}
@@ -498,15 +502,15 @@ function fitScale(w,h){
 }
 function isoTransform(target,w,h,scale){
   target.translate(w/2+view.x,h/2+view.y);
-  const a=ISO_TILE_X*scale*view.zoom/2;
-  const b=ISO_TILE_Y*scale*view.zoom/2;
+  const a=ISO_TILE_X*scale*zoom/2;
+  const b=ISO_TILE_Y*scale*zoom/2;
   target.transform(a,b,-a,b,0,0);
   target.translate(-160,-160);
 }
 const ISO_TILE_X=3.2,ISO_TILE_Y=1.6;
 
 function isoPoint(x,y,z=0,w=mapCanvas.clientWidth,h=mapCanvas.clientHeight,scale=fitScale(w,h)){
-  const s=scale*view.zoom;
+  const s=scale*zoom;
   return [
     w/2+view.x+(x-y)*ISO_TILE_X*s/2,
     h/2+view.y+(x+y-320)*ISO_TILE_Y*s/2-z*ISO_TILE_Y*s
@@ -555,7 +559,7 @@ function drawTree(target,t,w,h,scale){
 }
 function drawVillage(target,v,w,h,scale){
   const p=isoPoint(v.x,v.y,0,w,h,scale);
-  const s=Math.max(.7,scale*view.zoom);
+  const s=Math.max(.7,scale*zoom);
   const x=p[0],y=p[1];
   target.fillStyle='#513c2b';target.fillRect(Math.round(x-4*s),Math.round(y-1*s),Math.round(8*s),Math.round(5*s));
   target.fillStyle='#d9c38a';target.fillRect(Math.round(x-3*s),Math.round(y),Math.round(6*s),Math.round(4*s));
@@ -564,7 +568,7 @@ function drawVillage(target,v,w,h,scale){
 function drawContainers(target,now,w,h,scale){
   containers.forEach(c=>{
     const p=isoPoint(c.x,c.y,c.z,w,h,scale);
-    const s=Math.max(.55,scale*view.zoom);
+    const s=Math.max(.55,scale*zoom);
     target.fillStyle='#29383b';
     target.fillRect(Math.round(p[0]-2*s),Math.round(p[1]-2*s),Math.max(1,Math.round(4*s)),Math.max(1,Math.round(2*s)));
     target.fillStyle=c.color;
@@ -574,7 +578,7 @@ function drawContainers(target,now,w,h,scale){
 function drawPorts(target,w,h,scale){
   ports.forEach(p=>{
     const land=isoPoint(p.x,p.y,0,w,h,scale),water=isoPoint(p.water[0],p.water[1],0,w,h,scale);
-    target.strokeStyle='#c4aa78';target.lineWidth=Math.max(1,scale*view.zoom);
+    target.strokeStyle='#c4aa78';target.lineWidth=Math.max(1,scale*zoom);
     target.beginPath();target.moveTo(land[0],land[1]);target.lineTo(water[0],water[1]);target.stroke();
     target.fillStyle='#9a7a4d';
     target.fillRect(Math.round(water[0]-2),Math.round(water[1]-1),Math.max(2,Math.round(5*scale)),Math.max(1,Math.round(2*scale)));
@@ -586,12 +590,12 @@ function drawShip(target,s,w,h,scale,now){
   const x=a[0]+(b[0]-a[0])*u,y=a[1]+(b[1]-a[1])*u;
   const p=isoPoint(x,y,.5,w,h,scale);
   const ang=Math.atan2((b[1]-a[1])*ISO_TILE_Y,(b[0]-a[0])*ISO_TILE_X);
-  const len=Math.max(5,scale*view.zoom*10),wid=Math.max(2,scale*view.zoom*4);
+  const len=Math.max(5,scale*zoom*10),wid=Math.max(2,scale*zoom*4);
   target.save();target.translate(p[0],p[1]);target.rotate(ang);
   target.fillStyle='rgba(0,0,0,.35)';target.fillRect(-len*.55,wid*.7,len,wid);
   target.fillStyle=C.shipDark;target.fillRect(-len*.55,-wid*.5,len,wid);
   target.fillStyle=C.ship;target.fillRect(-len*.35,-wid*.9,len*.55,Math.max(1,wid*.55));
-  target.fillStyle='#f1d98b';target.fillRect(len*.18,-wid*1.8,Math.max(1,scale*view.zoom),Math.max(1,scale*view.zoom));
+  target.fillStyle='#f1d98b';target.fillRect(len*.18,-wid*1.8,Math.max(1,scale*zoom),Math.max(1,scale*zoom));
   target.strokeStyle='#eee';target.lineWidth=1;target.beginPath();target.moveTo(len*.18,-wid*1.8);target.lineTo(len*.18,wid*.2);target.stroke();
   target.restore();
 }
@@ -600,7 +604,7 @@ function drawUnits(target,w,h,scale,now){
   units.forEach(u=>{
     const bob=Math.sin(t*4+u.phase)*.25;
     const p=isoPoint(u.x,u.y,.55+bob,w,h,scale);
-    const r=Math.max(1,Math.min(3,scale*view.zoom*1.35));
+    const r=Math.max(1,Math.min(3,scale*zoom*1.35));
     target.fillStyle='rgba(0,0,0,.35)';target.fillRect(Math.round(p[0]-r),Math.round(p[1]+r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*.55)));
     target.fillStyle=C.units[u.clan];target.fillRect(Math.round(p[0]-r),Math.round(p[1]-r),Math.max(1,Math.round(r*2)),Math.max(1,Math.round(r*1.5)));
     target.fillStyle='#f3c6a1';target.fillRect(Math.round(p[0]),Math.round(p[1]-r*1.3),Math.max(1,Math.round(r)),Math.max(1,Math.round(r)));
@@ -637,12 +641,12 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
   // Dark extrusion/drop shadows under each island — isometric depth without realistic textures.
   islands.forEach(is=>{
     is.polys.forEach(poly=>{
-      drawIsoPoly(target,poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*view.zoom),w,h,scale);
+      drawIsoPoly(target,poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*zoom),w,h,scale);
     });
   });
 
   // Projected 320×320 world — real tile state rendered as a 45° isometric map.
-  const worldScale=scale*view.zoom;
+  const worldScale=scale*zoom;
   target.drawImage(
     isoLayer,
     w/2+view.x-ISO_W*worldScale/2,
@@ -654,7 +658,7 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
   // White glow/outline over each island edge.
   target.save();
   target.shadowColor='#ffffff';
-  target.shadowBlur=Math.max(1,2.4*scale*view.zoom);
+  target.shadowBlur=Math.max(1,2.4*scale*zoom);
   drawIslandOutlines(target,w,h,scale);
   target.restore();
 
@@ -688,7 +692,7 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
     const q=isoPoint(disaster.x,disaster.y,1,w,h,scale);
     target.fillStyle=disaster.type==='Volcano'?'#f26324':'#f0c55f';
     for(let i=0;i<24;i++){
-      const a=i*.85+now*.002,r=(2+i*.35)*scale*view.zoom;
+      const a=i*.85+now*.002,r=(2+i*.35)*scale*zoom;
       target.fillRect(Math.round(q[0]+Math.cos(a)*r),Math.round(q[1]+Math.sin(a)*r),Math.max(1,Math.round(scale)),Math.max(1,Math.round(scale)));
     }
     if(pulse>.55){target.fillStyle='rgba(255,255,255,.24)';target.fillRect(q[0]-8,q[1]-8,16,16)}
@@ -703,7 +707,7 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
     if(night>.58){
       villages.forEach(v=>{
         const p=isoPoint(v.x,v.y,1,w,h,scale);
-        target.fillStyle='#ffd66a';target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale*view.zoom)),Math.max(1,Math.round(scale*view.zoom)));
+        target.fillStyle='#ffd66a';target.fillRect(Math.round(p[0]),Math.round(p[1]),Math.max(1,Math.round(scale*zoom)),Math.max(1,Math.round(scale*zoom)));
       });
     }
   }
@@ -715,6 +719,8 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
 }
 function drawFrame(now){
   const w=mapCanvas.clientWidth,h=mapCanvas.clientHeight;
+  const zr=document.getElementById('zoomReadout');
+  if(zr)zr.textContent=Math.round(zoom*100)+'%';
   ctx.clearRect(0,0,w,h);
   if(shake>0){
     ctx.save();
@@ -806,7 +812,7 @@ function triggerDisaster(){
 }
 function resetWorld(){
   clearInterval(timer);running=false;timer=null;
-  view={zoom:1,x:0,y:0};day=12.5;viewers=null;disaster=null;shake=0;
+  zoom=1;view={x:0,y:0};day=12.5;viewers=null;disaster=null;shake=0;
   document.getElementById('start').textContent='▶ Start';
   document.getElementById('status').textContent='World paused.';
   document.getElementById('events').innerHTML='';
@@ -854,8 +860,17 @@ function tick(){
   if(shake>0)shake*=.8;
   updateUI();
 }
-function setZoom(next){view.zoom=clamp(next,.65,3.8)}
-function resetView(){view={zoom:1,x:0,y:0}}
+function handleZoom(direction){
+  if(direction==='in') zoom=Math.min(zoom+0.2,maxZoom);
+  else zoom=Math.max(zoom-0.2,minZoom);
+  drawFrame(performance.now());
+}
+function resetView(){
+  zoom=1;
+  view={x:0,y:0};
+  drawFrame(performance.now());
+}
+
 function downloadBlob(blob,name){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
@@ -929,19 +944,19 @@ mapCanvas.addEventListener('pointerup',e=>{
 });
 mapCanvas.addEventListener('pointercancel',()=>{drag.on=false;mapCanvas.classList.remove('dragging')});
 mapCanvas.addEventListener('wheel',e=>{
-  e.preventDefault();setZoom(view.zoom*(e.deltaY<0?1.12:.89));
+  e.preventDefault();
+  if(e.deltaY<0)handleZoom('in');
+  else handleZoom('out');
 },{passive:false});
 
-document.getElementById('zoomIn').addEventListener('click',()=>setZoom(view.zoom*1.25));
-document.getElementById('zoomOut').addEventListener('click',()=>setZoom(view.zoom*.8));
+document.getElementById('zoomIn').addEventListener('click',()=>handleZoom('in'));
+document.getElementById('zoomOut').addEventListener('click',()=>handleZoom('out'));
 document.getElementById('zoomReset').addEventListener('click',resetView);
 
 window.addEventListener('keydown',e=>{
-  if(['+','=','-','_','0','w','W','s','S'].includes(e.key)){
-    e.preventDefault();
-    if(e.key==='0')resetView();
-    else setZoom(view.zoom*(e.key==='+'||e.key==='='||e.key==='w'||e.key==='W'?1.12:.89));
-  }
+  if(e.key==='w'||e.key==='W'||e.key==='+'||e.key==='=')handleZoom('in');
+  if(e.key==='s'||e.key==='S'||e.key==='-'||e.key==='_')handleZoom('out');
+  if(e.key==='0')resetView();
 });
 window.addEventListener('resize',resize);
 
