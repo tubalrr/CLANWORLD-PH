@@ -625,7 +625,7 @@ function drawGold(target,now,w,h,scale){
 }
 function drawIslandOutlines(target,w,h,scale){
   islands.forEach(is=>{
-    drawIsoPoly(target,is.poly,null,'#fff');
+    is.polys.forEach(poly=>drawIsoPoly(target,poly,null,'#fff',0,w,h,scale));
   });
 }
 function drawDynamicWorld(target,w,h,now,exportMode=false){
@@ -636,7 +636,9 @@ function drawDynamicWorld(target,w,h,now,exportMode=false){
 
   // Dark extrusion/drop shadows under each island — isometric depth without realistic textures.
   islands.forEach(is=>{
-    drawIsoPoly(target,is.poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*view.zoom),w,h,scale);
+    is.polys.forEach(poly=>{
+      drawIsoPoly(target,poly,'rgba(2,13,18,.78)',null,Math.max(4,8*scale*view.zoom),w,h,scale);
+    });
   });
 
   // Projected 320×320 world — real tile state rendered as a 45° isometric map.
