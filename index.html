@@ -171,16 +171,16 @@ scene.background=new THREE.Color(0x0a3a4a);
 scene.fog=new THREE.Fog(0x0a3a4a,70,180);
 
 const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,260);
-camera.position.set(0,42,48);
+camera.position.set(0,50,43);
 
 const controls=new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true;
 controls.dampingFactor=.06;
 controls.minDistance=13;
 controls.maxDistance=92;
-controls.maxPolarAngle=Math.PI*.46;
+controls.maxPolarAngle=Math.PI*.43;
 controls.minPolarAngle=.35;
-controls.target.set(0,0,2);
+controls.target.set(0,0,1);
 
 const hemi=new THREE.HemisphereLight(0xe8ffd4,0x16313a,2.7);
 scene.add(hemi);
@@ -214,6 +214,23 @@ const islands=[
  {name:'Mindoro',clan:0,x:-4,z:5,w:5,d:8,seed:33,coast:.08}
 ];
 
+function terrainTexture(base,accent1,accent2){
+ const c=document.createElement('canvas');c.width=256;c.height=256;
+ const x=c.getContext('2d');x.fillStyle=base;x.fillRect(0,0,256,256);
+ for(let i=0;i<520;i++){
+  const px=Math.random()*256,py=Math.random()*256,r=1+Math.random()*5;
+  x.globalAlpha=.10+Math.random()*.22;
+  x.fillStyle=Math.random()>.5?accent1:accent2;
+  x.beginPath();x.arc(px,py,r,0,Math.PI*2);x.fill();
+ }
+ x.globalAlpha=1;
+ const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;
+ return t;
+}
+const texGrass=terrainTexture('#8fb85f','#b6cf75','#668e4d');
+const texForest=terrainTexture('#315b3a','#416f42','#244b31');
+const texBrown=terrainTexture('#78654b','#9b835f','#4f4739');
+const texBeach=terrainTexture('#dfc38c','#f0dcae','#c9aa72');
 function hash(x,y,s){return Math.abs(Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453)%1}
 function pts(isl,scale=1){
  const out=[];
@@ -243,7 +260,9 @@ function polyMesh(points,y,material,height=1){
 }
 function ringTerrain(isl,scale,y,color,height){
  const p=pts(isl,scale);
- return polyMesh(p,y,new THREE.MeshStandardMaterial({color,roughness:1}),height);
+ const map=color===0x9cba6d?texGrass:color===0x6f9c59?texForest:color===0xe8d59a?texBeach:texBrown;
+ const mat=new THREE.MeshStandardMaterial({color,roughness:.96,map});
+ return polyMesh(p,y,mat,height);
 }
 function addGold(isl){
  const count=Math.max(2,Math.floor(isl.w/3.5));
@@ -377,12 +396,14 @@ function addTree(x,z,s=1,kind=0){
 }
 function addMountain(x,z,h,s=1){
  const g=new THREE.Group();
- const dark=new THREE.MeshStandardMaterial({color:0x536052,roughness:1});
- const rock=new THREE.Mesh(new THREE.ConeGeometry(1.0*s,h,7),dark);
- rock.position.y=h/2;
- const snow=new THREE.Mesh(new THREE.ConeGeometry(.42*s,h*.36,7),new THREE.MeshStandardMaterial({color:0xb9c2aa,roughness:1}));
- snow.position.y=h*.76;
- g.add(rock,snow);g.position.set(x,0,z);g.rotation.y=hash(x,z,7)*6.28;g.castShadow=true;scene.add(g);worldObjects.push(g);
+ const dark=new THREE.MeshStandardMaterial({color:0x6b624e,roughness:.98,map:texBrown});
+ const rock=new THREE.Mesh(new THREE.ConeGeometry(1.25*s,h,8),dark);
+ rock.scale.z=.82;rock.position.y=h/2;
+ const shoulder=new THREE.Mesh(new THREE.ConeGeometry(1.75*s,h*.42,8),dark);
+ shoulder.scale.z=.72;shoulder.position.y=h*.25;
+ const snow=new THREE.Mesh(new THREE.ConeGeometry(.48*s,h*.32,8),new THREE.MeshStandardMaterial({color:0xe7eadf,roughness:.9}));
+ snow.position.y=h*.78;
+ g.add(shoulder,rock,snow);g.position.set(x,0,z);g.rotation.y=hash(x,z,7)*6.28;g.castShadow=true;scene.add(g);worldObjects.push(g);
 }
 function addHouse(x,z,clan,scale=1){
  const g=new THREE.Group();
@@ -620,7 +641,7 @@ document.getElementById('disaster').onclick=triggerDisaster;
 document.getElementById('reset').onclick=()=>{
  clearInterval(timer);running=false;
  clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
- viewers=1284;camera.position.set(0,42,48);controls.target.set(0,0,2);
+ viewers=1284;camera.position.set(0,50,43);controls.target.set(0,0,1);
  document.getElementById('start').textContent='▶ Start';
  document.getElementById('status').textContent='World paused.';
  document.getElementById('events').innerHTML='';
