@@ -13,7 +13,20 @@ body{background:linear-gradient(#8dbb72,#315844)}
 #map:active{cursor:grabbing}
 .vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 48% 42%,transparent 48%,rgba(9,18,13,.35) 100%)}
 .hud{position:absolute;z-index:10;inset:0;pointer-events:none}
-.brand{position:absolute;left:22px;top:18px;pointer-events:auto}
+.brand{position:absolute;left:88px;top:18px;pointer-events:auto}
+.topbar{position:absolute;z-index:14;left:50%;top:12px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}
+.res{min-width:92px;padding:7px 10px;background:rgba(10,29,29,.9);border:1px solid rgba(143,213,213,.28);border-radius:7px;box-shadow:0 5px 18px #0007;font-size:10px;font-weight:800;text-align:center}
+.res b{display:block;font-size:14px;color:#f5f0c9;margin-top:2px}
+.leftnav{position:absolute;z-index:13;left:10px;top:90px;width:178px;pointer-events:auto}
+.navtitle{padding:8px 12px;background:#0f1f1f;border:1px solid #365353;border-radius:7px 7px 0 0;font-size:10px;font-weight:900;letter-spacing:.12em;color:#86dbe0}
+.navbtn{width:100%;display:block;text-align:left;padding:10px 12px;background:rgba(15,31,31,.92);border:0;border-bottom:1px solid #294040;color:#dbe9e5;font-size:11px;font-weight:750;cursor:pointer}
+.navbtn:hover{background:#183939;color:#fff}
+.navbtn.active{background:#1b4c4f;color:#9eeaf0}
+.minimap{position:absolute;z-index:13;right:18px;top:76px;width:148px;height:154px;padding:8px;background:rgba(10,27,28,.9);border:1px solid #4b6d6d;border-radius:8px;box-shadow:0 10px 28px #0008;pointer-events:none}
+.minimap canvas{width:100%;height:100%;display:block;border-radius:4px}
+.legend{position:absolute;z-index:13;left:50%;bottom:8px;transform:translateX(-50%);display:flex;gap:13px;align-items:center;padding:8px 14px;background:rgba(9,24,24,.94);border:1px solid #42605d;border-radius:8px;box-shadow:0 8px 25px #0009;pointer-events:none;font-size:9px;font-weight:800;white-space:nowrap}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+.daycycle{position:absolute;z-index:14;left:50%;top:59px;transform:translateX(-50%);padding:4px 9px;background:#102a2bde;border:1px solid #406363;border-radius:6px;font-size:9px;font-weight:900;pointer-events:none}
 .brand .kicker{font-size:11px;font-weight:900;letter-spacing:.16em;color:#fff;text-shadow:0 2px 8px #0008}
 .brand h1{margin:2px 0 0;font-size:34px;line-height:1;font-weight:950;letter-spacing:-.04em;text-shadow:0 3px 0 #263629,0 7px 18px #0009}
 .brand p{margin:7px 0 0;font-size:12px;font-weight:700;color:#edf7e7;text-shadow:0 2px 6px #0008}
@@ -65,6 +78,26 @@ select{width:100%;margin:8px 0}
 <canvas id="map"></canvas>
 <div class="vignette"></div>
 <div class="hud">
+  <div class="topbar">
+    <div class="res">🟡 GOLD<b id="goldUI">2,450</b></div>
+    <div class="res">🪵 WOOD<b id="woodUI">5,320</b></div>
+    <div class="res">🌾 FOOD<b id="foodUI">8,760</b></div>
+    <div class="res">🐟 FISH<b id="fishUI">4,210</b></div>
+    <div class="res">👥 POPULATION<b id="popUI">12,540</b></div>
+  </div>
+  <div class="leftnav">
+    <div class="navtitle">CLANWORLD PH</div>
+    <button class="navbtn active">🌍 Map</button>
+    <button class="navbtn">⚔ Clans</button>
+    <button class="navbtn">🏠 Villages</button>
+    <button class="navbtn">🪙 Resources</button>
+    <button class="navbtn">👥 Units</button>
+    <button class="navbtn">🔨 Build</button>
+    <button class="navbtn">🌋 Disaster</button>
+    <button class="navbtn">⚑ Events</button>
+  </div>
+  <div class="minimap"><canvas id="mini"></canvas></div>
+  <div class="daycycle" id="daycycle">☀ DAY 124 · 12:30</div>
   <div class="brand">
     <div class="kicker">LIVE CIVILIZATION SIMULATION</div>
     <h1>CLANWORLD PH</h1>
@@ -74,7 +107,17 @@ select{width:100%;margin:8px 0}
   <div id="alert" class="alert">⚠️ WORLD EVENT</div>
   <div class="cards" id="cards"></div>
   <div class="hint">🟡 GOLD · 🌲 WOOD · 🌾 FOOD · 🐟 FISH &nbsp; | &nbsp; DRAG TO ROTATE · W/S OR +/− TO ZOOM · 0 RESET</div>
-  <div class="credit">BUILT BY <span>TUBAL HUB</span></div>
+  <div class="legend">
+ <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
+ <span class="leg"><i style="background:#2ec5d3"></i>Shallow / Reef</span>
+ <span class="leg"><i style="background:#dfc38c"></i>Beach</span>
+ <span class="leg"><i style="background:#9fbe68"></i>Rice Fields</span>
+ <span class="leg"><i style="background:#315b3a"></i>Forest</span>
+ <span class="leg">▲ Mountains</span>
+ <span class="leg">⌂ Villages</span>
+ <span class="leg">● Units</span>
+</div>
+<div class="credit">BUILT BY <span>TUBAL HUB</span></div>
 </div>
 
 <aside class="side">
@@ -124,8 +167,8 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.12;
 
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x80aa70);
-scene.fog=new THREE.Fog(0x80aa70,70,170);
+scene.background=new THREE.Color(0x0a3a4a);
+scene.fog=new THREE.Fog(0x0a3a4a,70,180);
 
 const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,260);
 camera.position.set(0,42,48);
@@ -139,7 +182,8 @@ controls.maxPolarAngle=Math.PI*.46;
 controls.minPolarAngle=.35;
 controls.target.set(0,0,2);
 
-scene.add(new THREE.HemisphereLight(0xe8ffd4,0x274b34,2.4));
+const hemi=new THREE.HemisphereLight(0xe8ffd4,0x16313a,2.7);
+scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff2c9,4.2);
 sun.position.set(-28,55,22);
 sun.castShadow=true;
@@ -147,11 +191,13 @@ sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;
 scene.add(sun);
 const rim=new THREE.DirectionalLight(0xb6e7ff,1.15);
+let dayTime=12.5;
+
 rim.position.set(35,22,-30);
 scene.add(rim);
 
 const names=['Luzon','Visayas','Mindanao'];
-const colors=[0x4f9f55,0x4e94bd,0xc68b46];
+const colors=[0x668f4d,0x628ea5,0x8e7049];
 const accents=[0x91d26d,0x82c8ec,0xf1c16e];
 const emojis=['🟢','🔵','🟠'];
 let clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
@@ -251,6 +297,34 @@ function addFarmland(isl){
    line.position.set(x,1.49,z-.28+row*.28);scene.add(line);worldObjects.push(line);
   }
  }
+}
+function addRiver(isl,offset=0){
+ const start=new THREE.Vector3(isl.x+offset,3.4,isl.z-isl.d*.18);
+ const end=new THREE.Vector3(isl.x+isl.w*.2+offset,1.35,isl.z+isl.d*.46);
+ const mid1=new THREE.Vector3(isl.x-isl.w*.15+offset,2.7,isl.z+isl.d*.08);
+ const mid2=new THREE.Vector3(isl.x+isl.w*.1+offset,1.9,isl.z+isl.d*.28);
+ const curve=new THREE.CatmullRomCurve3([start,mid1,mid2,end]);
+ const river=new THREE.Mesh(new THREE.TubeGeometry(curve,28,.11,6,false),
+  new THREE.MeshStandardMaterial({color:0x2394a4,roughness:.25,metalness:.05}));
+ river.castShadow=true;scene.add(river);worldObjects.push(river);
+ animated.push({type:'river',object:river,phase:hash(isl.x,isl.z,180)*6.28});
+}
+function addLake(isl){
+ const lake=new THREE.Mesh(new THREE.CircleGeometry(Math.min(1.7,isl.w*.12),24),
+  new THREE.MeshStandardMaterial({color:0x248fa0,roughness:.2,metalness:.05}));
+ lake.rotation.x=-Math.PI/2;lake.position.set(isl.x-isl.w*.15,1.48,isl.z+isl.d*.08);scene.add(lake);worldObjects.push(lake);
+}
+function addSmoke(isl){
+ if(!['Luzon','Mindanao'].includes(isl.name))return;
+ const g=new THREE.Group();
+ for(let i=0;i<5;i++){
+  const p=new THREE.Mesh(new THREE.SphereGeometry(.42+i*.08,10,8),
+   new THREE.MeshStandardMaterial({color:0x66706b,transparent:true,opacity:.42,roughness:1}));
+  p.position.set((hash(i,isl.seed,190)-.5)*.45,i*.65, (hash(i,isl.seed,191)-.5)*.35);
+  g.add(p);
+ }
+ g.position.set(isl.x+isl.w*.12,3.7,isl.z-isl.d*.08);scene.add(g);worldObjects.push(g);
+ animated.push({type:'smoke',object:g,phase:hash(isl.x,isl.z,192)*6.28});
 }
 function addFishGrounds(isl){
  const count=Math.max(2,Math.floor(isl.w/3));
@@ -360,6 +434,9 @@ function addIsland(isl){
  addWoodland(isl);
  addFarmland(isl);
  addFishGrounds(isl);
+ addLake(isl);
+ addRiver(isl,isl.name==='Mindanao'?.9:0);
+ addSmoke(isl);
  const mCount=Math.max(2,Math.floor(isl.w/3));
  for(let i=0;i<mCount;i++){
   const x=isl.x+(hash(i,isl.seed,30)-.5)*isl.w*.52;
@@ -454,7 +531,15 @@ function alertWorld(t){
  const a=document.getElementById('alert');a.textContent=t;a.classList.add('show');
  clearTimeout(alertWorld.timer);alertWorld.timer=setTimeout(()=>a.classList.remove('show'),3000);
 }
+function updateTopUI(){
+ document.getElementById('goldUI').textContent=(2450+clans.reduce((a,c)=>a+c.points,0)).toLocaleString();
+ document.getElementById('woodUI').textContent=(5320+clans.reduce((a,c)=>a+c.villages*8,0)).toLocaleString();
+ document.getElementById('foodUI').textContent=(8760+clans.reduce((a,c)=>a+c.members*2,0)).toLocaleString();
+ document.getElementById('fishUI').textContent=(4210+clans.reduce((a,c)=>a+c.members,0)).toLocaleString();
+ document.getElementById('popUI').textContent=(12540+clans.reduce((a,c)=>a+c.members,0)).toLocaleString();
+}
 function render(){
+ updateTopUI();
  clans.forEach((c,i)=>c.territory=islands.filter(x=>x.clan===i).length);
  document.getElementById('viewers').textContent=viewers.toLocaleString();
  document.getElementById('cards').innerHTML=clans.map((c,i)=>`
@@ -559,10 +644,34 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>{
  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);
 });
-spawn();log('🌏 Low-poly island world loaded.');render();
+function drawMini(){
+ const c=document.getElementById('mini'),ctx=c.getContext('2d');
+ c.width=260;c.height=270;ctx.fillStyle='#0a3a4a';ctx.fillRect(0,0,c.width,c.height);
+ const sx=c.width/65,sz=c.height/58;
+ islands.forEach(i=>{
+  ctx.beginPath();
+  const p=pts(i,.72);
+  p.forEach((q,n)=>{const x=(q.x+30)*sx,y=(q.y+27)*sz;n?ctx.lineTo(x,y):ctx.moveTo(x,y)});
+  ctx.closePath();ctx.fillStyle=['#668f4d','#628ea5','#8e7049'][i.clan];ctx.fill();
+  ctx.strokeStyle='#d9cf91';ctx.stroke();
+ });
+}
+function updateDayNight(){
+ dayTime=(dayTime+.002)%24;
+ const daylight=Math.max(0,Math.sin((dayTime-6)/12*Math.PI));
+ const night=1-daylight;
+ sun.intensity=.7+daylight*3.8;
+ hemi.intensity=.9+daylight*1.8;
+ rim.intensity=.5+daylight*.7;
+ scene.background.lerpColors(new THREE.Color(0x06151e),new THREE.Color(0x0a3a4a),daylight);
+ scene.fog.color.copy(scene.background);
+ document.getElementById('daycycle').textContent=(daylight>.35?'☀ DAY ':'🌙 NIGHT ')+'124 · '+String(Math.floor(dayTime)).padStart(2,'0')+':'+String(Math.floor((dayTime%1)*60)).padStart(2,'0');
+}
+spawn();drawMini();log('🌏 Philippine archipelago world loaded.');render();
 function animate(){
  requestAnimationFrame(animate);
  controls.update();
+ updateDayNight();
  const now=performance.now()*.001;
  animated.forEach(a=>{
   const o=a.object;
@@ -581,6 +690,13 @@ function animate(){
   }else if(a.type==='foam'){
    o.rotation.z=now*.18+a.phase;
    o.scale.setScalar(.9+Math.sin(now*1.7+a.phase)*.12);
+  }else if(a.type==='river'){
+   o.position.x+=Math.sin(now*1.4+a.phase)*.018;
+   o.material.opacity=.72+.12*Math.sin(now*2+a.phase);
+  }else if(a.type==='smoke'){
+   o.position.y=3.7+Math.sin(now*.35+a.phase)*.35;
+   o.rotation.y+=.002;
+   o.scale.setScalar(1+Math.sin(now*.45+a.phase)*.06);
   }else if(a.type==='gold'){
    const pulse=.55+.45*Math.sin(now*2.6+a.phase);
    o.material.emissiveIntensity=1.0+pulse*2.2;
