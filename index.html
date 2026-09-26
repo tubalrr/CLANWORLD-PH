@@ -3,195 +3,456 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CLANWORLD PH — 3D World</title>
+<title>CLANWORLD PH — Build. Unite. Conquer.</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06110f;color:#edf6ef;font-family:Inter,system-ui,sans-serif}
-.app{width:100%;height:100%;position:relative}.top{position:absolute;z-index:10;left:18px;top:16px;right:18px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
-.top>*{pointer-events:auto}.eyebrow{color:#7ee09a;font-size:12px;font-weight:800;letter-spacing:.12em}.title{font-size:clamp(25px,4vw,44px);font-weight:900;margin:3px 0;text-shadow:0 3px 18px #0008}.muted{color:#9eb0a5}
-.live,.panel{background:#0b1a15dc;border:1px solid #294638;border-radius:18px;box-shadow:0 15px 50px #0007;backdrop-filter:blur(16px)}
-.live{padding:10px 14px}.world{position:absolute;inset:0}.map{width:100%;height:100%;display:block;cursor:grab}.map:active{cursor:grabbing}
-.side{position:absolute;z-index:10;right:18px;top:100px;width:300px;max-height:calc(100vh - 118px);overflow:auto;display:flex;flex-direction:column;gap:10px}.panel{padding:14px}.control{display:flex;gap:7px;flex-wrap:wrap}.control button,.control select{border:1px solid #2b4939;background:#13271f;color:#edf6ef;border-radius:11px;padding:9px 11px;cursor:pointer}.control button:hover{border-color:#77d994}.giftGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:8px}.gift{width:100%}.events{height:230px;overflow:auto;display:flex;flex-direction:column;gap:7px;margin-top:8px}.event{background:#13251e;border-radius:10px;padding:8px;font-size:12px}.small,.status{font-size:12px}.leader{color:#f6d67e}
-.cards{position:absolute;z-index:10;left:18px;bottom:18px;display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:8px;max-width:min(720px,calc(100vw - 36px))}.clan{background:#0b1a15dc;border:1px solid #294638;border-radius:14px;padding:10px;backdrop-filter:blur(12px)}.name{font-weight:900}.meter{height:6px;background:#07120f;border-radius:9px;overflow:hidden;margin:7px 0}.fill{height:100%;background:#77d994}.stats{font-size:11px;color:#afc0b5;line-height:1.55}
-.hint{position:absolute;z-index:5;left:50%;bottom:18px;transform:translateX(-50%);padding:8px 12px;border-radius:999px;background:#07120fb8;border:1px solid #ffffff1a;color:#b8c9bf;font-size:12px;pointer-events:none}
-@media(max-width:850px){.side{left:10px;right:10px;top:auto;bottom:78px;width:auto;max-height:42vh}.cards{left:10px;bottom:10px;grid-template-columns:1fr 1fr;max-width:calc(100vw - 20px)}.cards .clan:last-child{display:none}.hint{display:none}}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#102018;color:#fff;font-family:Inter,Segoe UI,system-ui,sans-serif}
+body{background:linear-gradient(#8dbb72,#315844)}
+.app{position:relative;width:100%;height:100%;overflow:hidden}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
+#map:active{cursor:grabbing}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 48% 42%,transparent 48%,rgba(9,18,13,.35) 100%)}
+.hud{position:absolute;z-index:10;inset:0;pointer-events:none}
+.brand{position:absolute;left:22px;top:18px;pointer-events:auto}
+.brand .kicker{font-size:11px;font-weight:900;letter-spacing:.16em;color:#fff;text-shadow:0 2px 8px #0008}
+.brand h1{margin:2px 0 0;font-size:34px;line-height:1;font-weight:950;letter-spacing:-.04em;text-shadow:0 3px 0 #263629,0 7px 18px #0009}
+.brand p{margin:7px 0 0;font-size:12px;font-weight:700;color:#edf7e7;text-shadow:0 2px 6px #0008}
+.live{position:absolute;right:22px;top:18px;padding:9px 13px;border:2px solid rgba(255,255,255,.3);border-radius:9px;background:rgba(18,35,26,.78);box-shadow:0 5px 20px #0005;backdrop-filter:blur(8px);font-size:12px;font-weight:800;pointer-events:auto}
+.liveDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4f4f;box-shadow:0 0 12px #ff4f4f;margin-right:6px}
+.panel{background:linear-gradient(180deg,rgba(30,46,34,.94),rgba(12,25,19,.94));border:2px solid rgba(255,255,255,.12);border-radius:10px;box-shadow:0 12px 35px #0008, inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+.side{position:absolute;z-index:12;right:18px;top:76px;width:286px;max-height:calc(100vh - 94px);overflow:auto;display:flex;flex-direction:column;gap:9px;pointer-events:auto}
+.panel{padding:12px}
+.panelTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;color:#f3f7ee}
+.sub{font-size:11px;color:#aab9a9;line-height:1.45}
+select,.btn{font:inherit;color:#f3f7ee;background:#20382a;border:1px solid #506853;border-radius:7px;min-height:36px;padding:8px 10px;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.06)}
+select{width:100%;margin:8px 0}
+.btn:hover,select:hover{border-color:#c9e48e;background:#294633}
+.gifts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.gift{font-size:12px;font-weight:850;padding:8px 4px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.status{margin-top:8px;padding:8px;border-radius:6px;background:#0a1710;color:#c7d8c3;font-size:11px}
+.events{height:190px;overflow:auto;display:flex;flex-direction:column;gap:5px}
+.event{padding:8px;border-left:3px solid #87c76c;background:#172a1d;border-radius:5px;color:#dce8d8;font-size:11px;line-height:1.35}
+.cards{position:absolute;z-index:11;left:18px;bottom:18px;display:grid;grid-template-columns:repeat(3,190px);gap:8px;pointer-events:auto}
+.clan{padding:10px 11px;border-radius:9px;background:linear-gradient(180deg,rgba(27,45,31,.96),rgba(11,23,16,.96));border:2px solid rgba(255,255,255,.12);box-shadow:0 10px 25px #0007}
+.clanHead{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:950}
+.badge{padding:3px 6px;border-radius:5px;background:#0005;font-size:9px;color:#dcebd7}
+.meter{height:7px;background:#07110b;border-radius:99px;margin:8px 0 7px;overflow:hidden;border:1px solid #2e4732}
+.fill{height:100%;background:linear-gradient(90deg,#77b95f,#d2e88b)}
+.stats{font-size:10px;line-height:1.55;color:#b8c8b4}
+.leader{color:#f0d27c}
+.alert{position:absolute;z-index:15;left:50%;top:18px;transform:translateX(-50%) translateY(-90px);opacity:0;padding:10px 18px;border-radius:8px;background:#27170d;border:2px solid #e19b4b;box-shadow:0 10px 30px #0008;font-size:12px;font-weight:950;letter-spacing:.04em;transition:.25s}
+.alert.show{transform:translateX(-50%) translateY(0);opacity:1}
+.hint{position:absolute;z-index:10;left:50%;bottom:20px;transform:translateX(-50%);padding:7px 11px;border-radius:6px;background:#102019cc;border:1px solid #ffffff20;color:#d6e3d2;font-size:10px;font-weight:700;pointer-events:none}
+@media(max-width:900px){
+ .side{width:250px;right:9px;top:70px;max-height:48vh}
+ .cards{left:9px;bottom:9px;grid-template-columns:repeat(2,180px)}
+ .cards .clan:last-child{display:none}
+ .brand h1{font-size:28px}
+}
+@media(max-width:650px){
+ .side{left:9px;right:9px;width:auto;top:auto;bottom:92px;max-height:38vh}
+ .cards{grid-template-columns:1fr 1fr;width:calc(100% - 18px)}
+ .clan{min-width:0}
+ .hint{display:none}
+}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top"><div><div class="eyebrow">🔴 LIVE 3D ISLAND SIMULATION</div><div class="title">CLANWORLD PH</div><div class="muted">Build. Unite. Conquer.</div></div><div class="live">👀 <b id="viewers">1,284</b> viewers</div></header>
-<section class="world"><canvas id="map" class="map"></canvas></section>
-<div class="hint">🖱 Drag = rotate · + / − or W / S = zoom · 0 = reset</div>
-<div class="cards" id="cards"></div>
+<canvas id="map"></canvas>
+<div class="vignette"></div>
+<div class="hud">
+  <div class="brand">
+    <div class="kicker">LIVE CIVILIZATION SIMULATION</div>
+    <h1>CLANWORLD PH</h1>
+    <p>Build. Unite. Conquer.</p>
+  </div>
+  <div class="live"><span class="liveDot"></span><b id="viewers">1,284</b> VIEWERS</div>
+  <div id="alert" class="alert">⚠️ WORLD EVENT</div>
+  <div class="cards" id="cards"></div>
+  <div class="hint">DRAG TO ROTATE · W/S OR +/− TO ZOOM · 0 RESET</div>
+</div>
+
 <aside class="side">
-<section class="panel"><b>🎁 Clan Gifts</b><p class="small muted">Contribution determines the clan leader. Member cap: 400.</p>
-<select id="clan" style="width:100%;margin:6px 0"><option value="0">Luzon</option><option value="1">Visayas</option><option value="2">Mindanao</option></select>
-<div class="giftGrid"><button class="control gift" data-add="1">🌹 +1</button><button class="control gift" data-add="3">🎁 +3</button><button class="control gift" data-add="10">💎 +10</button><button class="control gift" data-add="25">🏰 +25</button><button class="control gift" data-add="50">🐉 +50</button><button class="control gift" data-add="100">👑 +100</button></div></section>
-<section class="panel"><div class="control"><button id="start">▶ Start</button><button id="event">⚡ Event</button><button id="disaster">🌋 Disaster</button><button id="reset">↺ Reset</button></div><div class="status muted" id="status">World paused.</div></section>
-<section class="panel"><b>📜 Live Event Feed</b><div class="events" id="events"></div></section>
+ <section class="panel">
+  <div class="panelTitle"><span>🎁 Clan Gifts</span><span class="badge">MAX 400</span></div>
+  <div class="sub">Gifts grow population and contribution. The top contributor becomes clan leader.</div>
+  <select id="clan"><option value="0">Luzon</option><option value="1">Visayas</option><option value="2">Mindanao</option></select>
+  <div class="gifts">
+   <button class="btn gift" data-add="1">🌹 +1</button>
+   <button class="btn gift" data-add="3">🎁 +3</button>
+   <button class="btn gift" data-add="10">💎 +10</button>
+   <button class="btn gift" data-add="25">🏰 +25</button>
+   <button class="btn gift" data-add="50">🐉 +50</button>
+   <button class="btn gift" data-add="100">👑 +100</button>
+  </div>
+ </section>
+ <section class="panel">
+  <div class="panelTitle">World Controls</div>
+  <div class="actions">
+   <button class="btn" id="start">▶ Start</button>
+   <button class="btn" id="event">⚡ Event</button>
+   <button class="btn" id="disaster">🌋 Disaster</button>
+   <button class="btn" id="reset">↺ Reset</button>
+  </div>
+  <div class="status" id="status">World paused.</div>
+ </section>
+ <section class="panel">
+  <div class="panelTitle">📜 Live Feed</div>
+  <div class="events" id="events"></div>
+ </section>
 </aside>
 </div>
+
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 const canvas=document.getElementById('map');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight,false);
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight,false);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
 
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x071b24); scene.fog=new THREE.Fog(0x071b24,48,155);
-const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,300); camera.position.set(0,36,42);
-const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.055; controls.minDistance=10; controls.maxDistance=80; controls.maxPolarAngle=Math.PI*.46; controls.minPolarAngle=.35; controls.target.set(0,1,0);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x80aa70);
+scene.fog=new THREE.Fog(0x80aa70,70,170);
 
-scene.add(new THREE.HemisphereLight(0xbbeeff,0x163d2b,2.3));
-const fill=new THREE.DirectionalLight(0x9edcff,1.1); fill.position.set(28,18,-25); scene.add(fill);
-const sun=new THREE.DirectionalLight(0xfff1cf,3.2); sun.position.set(-20,45,18); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048); scene.add(sun);
+const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,260);
+camera.position.set(0,42,48);
 
-const ocean=new THREE.Mesh(new THREE.CylinderGeometry(50,50,.65,128),new THREE.MeshStandardMaterial({color:0x075a73,roughness:.55,metalness:.08}));
-ocean.position.y=-1.05; ocean.receiveShadow=true; scene.add(ocean);
-const oceanRing=new THREE.Mesh(new THREE.RingGeometry(50.1,54,128),new THREE.MeshBasicMaterial({color:0x164f60,side:THREE.DoubleSide}));
-oceanRing.rotation.x=-Math.PI/2; oceanRing.position.y=-.66; scene.add(oceanRing);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=.06;
+controls.minDistance=13;
+controls.maxDistance=92;
+controls.maxPolarAngle=Math.PI*.46;
+controls.minPolarAngle=.35;
+controls.target.set(0,0,2);
 
-const names=['Luzon','Visayas','Mindanao'],colors=[0x48c878,0x55aee0,0xe5a052],emojis=['🟢','🔵','🟠'];
+scene.add(new THREE.HemisphereLight(0xe8ffd4,0x274b34,2.4));
+const sun=new THREE.DirectionalLight(0xfff2c9,4.2);
+sun.position.set(-28,55,22);
+sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;
+scene.add(sun);
+const rim=new THREE.DirectionalLight(0xb6e7ff,1.15);
+rim.position.set(35,22,-30);
+scene.add(rim);
+
+const names=['Luzon','Visayas','Mindanao'];
+const colors=[0x4f9f55,0x4e94bd,0xc68b46];
+const accents=[0x91d26d,0x82c8ec,0xf1c16e];
+const emojis=['🟢','🔵','🟠'];
 let clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
-let running=false,timer=null,viewers=1284,worldObjects=[],units=[],villages=[],disaster=null;
+let running=false,timer=null,viewers=1284;
+let worldObjects=[],units=[],villages=[],animated=[],disaster=null;
 
 const islands=[
- {name:'Luzon',clan:0,x:-8,z:-7,w:13,d:15,seed:4},
- {name:'Palawan',clan:0,x:-18,z:4,w:5,d:13,seed:9},
- {name:'Samar-Leyte',clan:1,x:9,z:-1,w:7,d:9,seed:12},
- {name:'Panay-Negros-Cebu',clan:1,x:1,z:4,w:11,d:6,seed:17},
- {name:'Mindanao',clan:2,x:11,z:11,w:15,d:14,seed:22},
- {name:'Bohol',clan:1,x:2,z:11,w:5,d:4,seed:28},
- {name:'Mindoro',clan:0,x:-4,z:4,w:5,d:8,seed:33}
+ {name:'Luzon',clan:0,x:-8,z:-7,w:15,d:17,seed:4,coast:0.2},
+ {name:'Palawan',clan:0,x:-19,z:3,w:5,d:14,seed:9,coast:.1},
+ {name:'Samar-Leyte',clan:1,x:9,z:-2,w:8,d:10,seed:12,coast:.1},
+ {name:'Panay-Negros-Cebu',clan:1,x:1,z:5,w:12,d:6,seed:17,coast:.15},
+ {name:'Mindanao',clan:2,x:11,z:11,w:16,d:15,seed:22,coast:.2},
+ {name:'Bohol',clan:1,x:2,z:11,w:5,d:4,seed:28,coast:.05},
+ {name:'Mindoro',clan:0,x:-4,z:5,w:5,d:8,seed:33,coast:.08}
 ];
 
 function hash(x,y,s){return Math.abs(Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453)%1}
-function islandPoints(isl){const p=[];for(let i=0;i<22;i++){const a=i/22*Math.PI*2,r=.78+.18*hash(i,isl.seed,isl.seed);p.push(new THREE.Vector2(isl.x+Math.cos(a)*isl.w/2*r,isl.z+Math.sin(a)*isl.d/2*r))}return p}
-function makeIsland(isl){
- const shape=islandPoints(isl),s=new THREE.Shape(); s.moveTo(shape[0].x,shape[0].y); shape.slice(1).forEach(p=>s.lineTo(p.x,p.y)); s.closePath();
- const g=new THREE.ExtrudeGeometry(s,{depth:1.2,bevelEnabled:true,bevelSegments:2,bevelSize:.22,bevelThickness:.35,curveSegments:3});
- g.rotateX(-Math.PI/2);
- const m=new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:.9,metalness:0});
- const mesh=new THREE.Mesh(g,m); mesh.position.y=-.25; mesh.castShadow=true; mesh.receiveShadow=true; scene.add(mesh); worldObjects.push(mesh);
- // layered terrain terraces
- for(let layer=0;layer<3;layer++){
-  const scale=1-layer*.16;
-  const tg=new THREE.CylinderGeometry(Math.min(isl.w,isl.d)*.23*scale,Math.min(isl.w,isl.d)*.34*scale,.45+layer*.12,10);
-  const tm=new THREE.MeshStandardMaterial({color:[0x5e8052,0x75965b,0x93a967][layer],roughness:1});
-  const terrain=new THREE.Mesh(tg,tm); terrain.scale.set(1.45,.9,1.15); terrain.position.set(isl.x,.72+layer*.42,isl.z); terrain.castShadow=true; scene.add(terrain); worldObjects.push(terrain);
+function pts(isl,scale=1){
+ const out=[];
+ const n=26;
+ for(let i=0;i<n;i++){
+  const a=i/n*Math.PI*2;
+  const wob=.82+.16*hash(i,isl.seed,isl.seed+3)+.06*Math.sin(a*3+isl.seed);
+  out.push(new THREE.Vector2(isl.x+Math.cos(a)*isl.w*.5*wob*scale,isl.z+Math.sin(a)*isl.d*.5*wob*scale));
  }
- // coastline foam
- const coast=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(shape.map(p=>new THREE.Vector3(p.x,.42,p.y))),new THREE.LineBasicMaterial({color:0xc8f2d2,transparent:true,opacity:.55}));
- scene.add(coast); worldObjects.push(coast);
- // central volcano and volcanic cone
- const volcanoHeight=5.5+hash(isl.seed,2,9)*3.5;
- const volcano=new THREE.Mesh(new THREE.ConeGeometry(Math.min(isl.w,isl.d)*.19,volcanoHeight,18),new THREE.MeshStandardMaterial({color:0x39463e,roughness:1}));
- volcano.position.set(isl.x+(hash(isl.seed,4,10)-.5)*isl.w*.18,volcanoHeight/2,isl.z+(hash(isl.seed,5,11)-.5)*isl.d*.18); volcano.castShadow=true; scene.add(volcano); worldObjects.push(volcano);
- const crater=new THREE.Mesh(new THREE.CylinderGeometry(Math.min(isl.w,isl.d)*.075,Math.min(isl.w,isl.d)*.11,.35,18),new THREE.MeshStandardMaterial({color:0x211d18,roughness:1}));
- crater.position.set(volcano.position.x,volcanoHeight+.05,volcano.position.z); scene.add(crater); worldObjects.push(crater);
- // mountains
- for(let i=0;i<Math.max(6,Math.floor(isl.w*1.25));i++){
-  const x=isl.x+(hash(i,isl.seed,2)-.5)*isl.w*.62,z=isl.z+(hash(i,isl.seed,3)-.5)*isl.d*.55;
-  const h=2.0+hash(i,isl.seed,4)*5.0;
-  const mt=new THREE.Mesh(new THREE.ConeGeometry(.65+hash(i,isl.seed,5)*.65,h,7),new THREE.MeshStandardMaterial({color:0x4e6257,roughness:1}));
-  mt.position.set(x,h/2,z); mt.castShadow=true; scene.add(mt); worldObjects.push(mt);
- }
- // trees
- for(let i=0;i<Math.floor(isl.w*4.8);i++){
-  const x=isl.x+(hash(i,isl.seed,6)-.5)*isl.w*.7,z=isl.z+(hash(i,isl.seed,7)-.5)*isl.d*.65;
-  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.07,.1,.55,5),new THREE.MeshStandardMaterial({color:0x68472d}));
-  trunk.position.set(x,.5,z);
-  const leaf=new THREE.Mesh(new THREE.ConeGeometry(.5+hash(i,isl.seed,8)*.35,1.65,7),new THREE.MeshStandardMaterial({color:0x23633a,roughness:1}));
-  leaf.position.set(x,1.2,z); leaf.castShadow=true; scene.add(trunk,leaf); worldObjects.push(trunk,leaf);
- }
- // label
- const label=document.createElement('canvas'); label.width=512;label.height=96;const lc=label.getContext('2d');lc.clearRect(0,0,512,96);lc.fillStyle='white';lc.font='900 42px system-ui';lc.textAlign='center';lc.fillText(isl.name.toUpperCase(),256,58);
- const tex=new THREE.CanvasTexture(label);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sp.scale.set(6,1.1,1);sp.position.set(isl.x,5,isl.z);scene.add(sp);worldObjects.push(sp);
+ return out;
 }
-function clearWorld(){worldObjects.forEach(o=>scene.remove(o));worldObjects=[];units=[];villages=[]}
+function shapeGeometry(points,height=1){
+ const s=new THREE.Shape();
+ s.moveTo(points[0].x,points[0].y);
+ for(let i=1;i<points.length;i++)s.lineTo(points[i].x,points[i].y);
+ s.closePath();
+ const g=new THREE.ExtrudeGeometry(s,{depth:height,bevelEnabled:true,bevelSegments:2,bevelSize:.18,bevelThickness:.18,curveSegments:2});
+ g.rotateX(-Math.PI/2);
+ return g;
+}
+function polyMesh(points,y,material,height=1){
+ const m=new THREE.Mesh(shapeGeometry(points,height),material);
+ m.position.y=y;
+ m.castShadow=true;m.receiveShadow=true;
+ scene.add(m);worldObjects.push(m);
+ return m;
+}
+function ringTerrain(isl,scale,y,color,height){
+ const p=pts(isl,scale);
+ return polyMesh(p,y,new THREE.MeshStandardMaterial({color,roughness:1}),height);
+}
+function addRoad(isl){
+ const group=new THREE.Group();
+ const mat=new THREE.MeshStandardMaterial({color:0x7b6341,roughness:1});
+ const points=[
+  [isl.x-isl.w*.34,isl.z-isl.d*.28],[isl.x-isl.w*.08,isl.z-.02],
+  [isl.x+isl.w*.26,isl.z+isl.d*.22]
+ ];
+ const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],.48,p[1])));
+ const geo=new THREE.TubeGeometry(curve,12,.10,5,false);
+ const road=new THREE.Mesh(geo,mat);
+ group.add(road);scene.add(group);worldObjects.push(group);
+}
+function addTree(x,z,s=1,kind=0){
+ const g=new THREE.Group();
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.07*s,.11*s,.48*s,5),new THREE.MeshStandardMaterial({color:0x65462c,roughness:1}));
+ trunk.position.y=.62*s;
+ const leafMat=new THREE.MeshStandardMaterial({color:kind?0x2f7042:0x3f824b,roughness:1});
+ const a=new THREE.Mesh(new THREE.ConeGeometry(.48*s,.92*s,7),leafMat);a.position.y=1.12*s;
+ const b=new THREE.Mesh(new THREE.ConeGeometry(.34*s,.72*s,7),leafMat);b.position.y=1.55*s;
+ g.add(trunk,a,b);g.position.set(x,0,z);g.rotation.y=hash(x,z,3)*Math.PI;
+ g.castShadow=true;scene.add(g);worldObjects.push(g);return g;
+}
+function addMountain(x,z,h,s=1){
+ const g=new THREE.Group();
+ const dark=new THREE.MeshStandardMaterial({color:0x536052,roughness:1});
+ const rock=new THREE.Mesh(new THREE.ConeGeometry(1.0*s,h,7),dark);
+ rock.position.y=h/2;
+ const snow=new THREE.Mesh(new THREE.ConeGeometry(.42*s,h*.36,7),new THREE.MeshStandardMaterial({color:0xb9c2aa,roughness:1}));
+ snow.position.y=h*.76;
+ g.add(rock,snow);g.position.set(x,0,z);g.rotation.y=hash(x,z,7)*6.28;g.castShadow=true;scene.add(g);worldObjects.push(g);
+}
+function addHouse(x,z,clan,scale=1){
+ const g=new THREE.Group();
+ const body=new THREE.Mesh(new THREE.BoxGeometry(.72*scale,.56*scale,.72*scale),new THREE.MeshStandardMaterial({color:0xd4bb7b,roughness:.9}));
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(.62*scale,.56*scale,4),new THREE.MeshStandardMaterial({color:0x794a37,roughness:1}));
+ roof.rotation.y=Math.PI/4;roof.position.y=.56*scale;
+ const flag=new THREE.Mesh(new THREE.PlaneGeometry(.42*scale,.25*scale),new THREE.MeshBasicMaterial({color:accents[clan],side:THREE.DoubleSide}));
+ flag.position.set(.34*scale,.94*scale,0);flag.rotation.y=Math.PI/2;
+ g.add(body,roof,flag);g.position.set(x,.55,z);g.castShadow=true;scene.add(g);worldObjects.push(g);villages.push(g);return g;
+}
+function addTown(isl){
+ const g=new THREE.Group();
+ const base=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.18,.24,8),new THREE.MeshStandardMaterial({color:0x9b7d4b,roughness:1}));
+ base.position.y=.48;
+ const hall=new THREE.Mesh(new THREE.BoxGeometry(1.05,.9,.8),new THREE.MeshStandardMaterial({color:0xe0c988,roughness:.85}));
+ hall.position.y=.98;
+ const roof=new THREE.Mesh(new THREE.ConeGeometry(.86,.75,4),new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:1}));
+ roof.rotation.y=Math.PI/4;roof.position.y=1.72;
+ const pole=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.3,5),new THREE.MeshStandardMaterial({color:0x503b28}));
+ pole.position.set(.75,1.7,0);
+ const flag=new THREE.Mesh(new THREE.PlaneGeometry(.52,.3),new THREE.MeshBasicMaterial({color:accents[isl.clan],side:THREE.DoubleSide}));
+ flag.position.set(.94,2.18,0);flag.rotation.y=Math.PI/2;
+ g.add(base,hall,roof,pole,flag);g.position.set(isl.x,0,isl.z);g.castShadow=true;scene.add(g);worldObjects.push(g);
+}
+function addVolcano(isl){
+ if(isl.name!=='Mindanao' && isl.name!=='Luzon')return;
+ const h=isl.name==='Mindanao'?4.6:3.4;
+ const g=new THREE.Group();
+ const cone=new THREE.Mesh(new THREE.ConeGeometry(1.65,h,14),new THREE.MeshStandardMaterial({color:0x4d5146,roughness:1}));
+ cone.position.y=h/2;
+ const crater=new THREE.Mesh(new THREE.CylinderGeometry(.62,.82,.24,16),new THREE.MeshStandardMaterial({color:0x1d201b,roughness:1}));
+ crater.position.y=h+.03;
+ const lava=new THREE.Mesh(new THREE.TorusGeometry(.54,.075,8,24),new THREE.MeshBasicMaterial({color:0xff6b1a}));
+ lava.rotation.x=Math.PI/2;lava.position.y=h+.12;
+ g.add(cone,crater,lava);g.position.set(isl.x+isl.w*.12,0,isl.z-isl.d*.08);g.castShadow=true;scene.add(g);worldObjects.push(g);
+}
+function addIsland(isl){
+ ringTerrain(isl,1,-.05,colors[isl.clan],1.05);
+ ringTerrain(isl,.91,.52,0x6f9c59,.65);
+ ringTerrain(isl,.79,.87,0x86aa62,.48);
+ ringTerrain(isl,.65,1.15,0x9cba6d,.28);
+ const beach=pts(isl,.96);
+ const coast=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(beach.map(p=>new THREE.Vector3(p.x,1.43,p.y))),new THREE.LineBasicMaterial({color:0xe8d59a,linewidth:2}));
+ scene.add(coast);worldObjects.push(coast);
+ addRoad(isl);
+ addTown(isl);
+ addVolcano(isl);
+ const mCount=Math.max(2,Math.floor(isl.w/3));
+ for(let i=0;i<mCount;i++){
+  const x=isl.x+(hash(i,isl.seed,30)-.5)*isl.w*.52;
+  const z=isl.z+(hash(i,isl.seed,31)-.5)*isl.d*.48;
+  addMountain(x,z,1.4+hash(i,isl.seed,32)*2.8,.8+hash(i,isl.seed,33)*.55);
+ }
+ const treeCount=Math.floor(isl.w*2.2);
+ for(let i=0;i<treeCount;i++){
+  const x=isl.x+(hash(i,isl.seed,40)-.5)*isl.w*.72;
+  const z=isl.z+(hash(i,isl.seed,41)-.5)*isl.d*.66;
+  addTree(x,z,.72+hash(i,isl.seed,42)*.55,i%3===0?1:0);
+ }
+ for(let i=0;i<Math.max(2,Math.floor(isl.w/2.6));i++){
+  const x=isl.x+(hash(i,isl.seed,50)-.5)*isl.w*.55;
+  const z=isl.z+(hash(i,isl.seed,51)-.5)*isl.d*.48;
+  addHouse(x,z,isl.clan,.8+hash(i,isl.seed,52)*.25);
+ }
+ const label=document.createElement('canvas');label.width=512;label.height=100;
+ const ctx=label.getContext('2d');ctx.font='900 38px system-ui';ctx.textAlign='center';
+ ctx.fillStyle='#102016';ctx.strokeStyle='#eef6dc';ctx.lineWidth=7;ctx.strokeText(isl.name.toUpperCase(),256,58);ctx.fillText(isl.name.toUpperCase(),256,58);
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true,depthTest:false}));
+ sprite.scale.set(5.6,1.1,1);sprite.position.set(isl.x,4.8,isl.z);scene.add(sprite);worldObjects.push(sprite);
+}
+function clearWorld(){
+ worldObjects.forEach(o=>scene.remove(o));
+ worldObjects=[];units=[];villages=[];animated=[];
+ if(disaster){scene.remove(disaster.group);disaster=null}
+}
 function spawn(){
- clearWorld(); islands.forEach(makeIsland);
+ clearWorld();
+ const sea=new THREE.Mesh(new THREE.CylinderGeometry(53,53,.7,96),new THREE.MeshStandardMaterial({color:0x4c91a1,roughness:.7,metalness:.02}));
+ sea.position.y=-1.05;sea.receiveShadow=true;scene.add(sea);worldObjects.push(sea);
+ for(let i=0;i<70;i++){
+  const a=i/70*Math.PI*2,r=38+hash(i,2,4)*12;
+  const foam=new THREE.Mesh(new THREE.RingGeometry(.25,.55,8),new THREE.MeshBasicMaterial({color:0xa9d4cf,transparent:true,opacity:.25,side:THREE.DoubleSide}));
+  foam.rotation.x=-Math.PI/2;foam.position.set(Math.cos(a)*r,-.66,Math.sin(a)*r);scene.add(foam);worldObjects.push(foam);
+ }
+ islands.forEach(addIsland);
  islands.forEach((isl,ii)=>{
   for(let j=0;j<5;j++){
-   const u=new THREE.Mesh(new THREE.SphereGeometry(.28,12,8),new THREE.MeshStandardMaterial({color:colors[isl.clan],emissive:colors[isl.clan],emissiveIntensity:.12}));
-   u.position.set(isl.x+(hash(j,isl.seed,11)-.5)*isl.w*.45,1.5,isl.z+(hash(j,isl.seed,12)-.5)*isl.d*.42);
-   u.castShadow=true;u.userData={island:ii,clan:isl.clan,tx:u.position.x,tz:u.position.z};scene.add(u);units.push(u);worldObjects.push(u);
-  }
-  for(let j=0;j<Math.max(2,Math.floor(isl.w/1.8));j++){
-   const hut=new THREE.Group();
-   const body=new THREE.Mesh(new THREE.BoxGeometry(.7,.55,.7),new THREE.MeshStandardMaterial({color:0xd7b26b}));
-   const roof=new THREE.Mesh(new THREE.ConeGeometry(.55,.55,4),new THREE.MeshStandardMaterial({color:0x874e36}));roof.rotation.y=Math.PI/4;roof.position.y=.55;
-   hut.add(body,roof);hut.position.set(isl.x+(hash(j,isl.seed,13)-.5)*isl.w*.55,.75,isl.z+(hash(j,isl.seed,14)-.5)*isl.d*.48);hut.castShadow=true;scene.add(hut);villages.push(hut);worldObjects.push(hut);
+   const g=new THREE.Group();
+   const body=new THREE.Mesh(new THREE.SphereGeometry(.23,10,8),new THREE.MeshStandardMaterial({color:colors[isl.clan],emissive:colors[isl.clan],emissiveIntensity:.1}));
+   const head=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8),new THREE.MeshStandardMaterial({color:0xffdfb4}));
+   head.position.y=.28;
+   g.add(body,head);
+   g.position.set(isl.x+(hash(j,isl.seed,60)-.5)*isl.w*.4,1.6,isl.z+(hash(j,isl.seed,61)-.5)*isl.d*.38);
+   g.userData={island:ii,clan:isl.clan,tx:g.position.x,tz:g.position.z,phase:hash(j,ii,70)*6.28};
+   scene.add(g);worldObjects.push(g);units.push(g);
   }
  });
 }
+function log(t){
+ const e=document.createElement('div');e.className='event';e.textContent=t;
+ document.getElementById('events').prepend(e);
+ while(document.getElementById('events').children.length>18)document.getElementById('events').lastChild.remove();
+}
+function alertWorld(t){
+ const a=document.getElementById('alert');a.textContent=t;a.classList.add('show');
+ clearTimeout(alertWorld.timer);alertWorld.timer=setTimeout(()=>a.classList.remove('show'),3000);
+}
+function render(){
+ clans.forEach((c,i)=>c.territory=islands.filter(x=>x.clan===i).length);
+ document.getElementById('viewers').textContent=viewers.toLocaleString();
+ document.getElementById('cards').innerHTML=clans.map((c,i)=>`
+ <article class="clan">
+  <div class="clanHead"><span>${emojis[i]} ${c.name}</span><span class="badge">${c.territory} ISLANDS</span></div>
+  <div class="meter"><div class="fill" style="width:${c.members/4}%"></div></div>
+  <div class="stats">👥 ${c.members}/400 · 💎 ${c.points.toLocaleString()} contribution<br>👑 <span class="leader">${c.leader}</span> · 🏘️ ${c.villages} villages</div>
+ </article>`).join('');
+}
+function gift(n){
+ const i=+document.getElementById('clan').value,c=clans[i],old=c.members;
+ c.members=Math.min(400,c.members+n);
+ const added=c.members-old;
+ c.points+=n*10;
+ c.villages=Math.min(99,c.villages+Math.floor(n/25));
+ if(c.points>0)c.leader='Top Contributor';
+ log(`🎁 ${c.name} received +${added} members and +${n*10} contribution.`);
+ alertWorld(`🎁 ${c.name.toUpperCase()} +${added} MEMBERS`);
+ render();
+}
 function createDisaster(type){
- if(disaster?.group){scene.remove(disaster.group);}
- const group=new THREE.Group(); disaster={type,group,life:0};
+ if(disaster)scene.remove(disaster.group);
+ const group=new THREE.Group();disaster={type,group,life:0};
  if(type==='Earthquake'){
-  const ring=new THREE.Mesh(new THREE.RingGeometry(.5,2.2,48),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.85,side:THREE.DoubleSide}));
-  ring.rotation.x=-Math.PI/2; ring.position.y=.9; group.add(ring);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.6,2.4,48),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.9,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=1.5;group.add(ring);
  }else if(type==='Typhoon'){
-  const cloud=new THREE.Mesh(new THREE.TorusGeometry(3.2,.7,10,48),new THREE.MeshBasicMaterial({color:0x9ca9b8,transparent:true,opacity:.65}));
-  cloud.rotation.x=Math.PI/2; cloud.position.set(0,8,0); group.add(cloud);
-  const eye=new THREE.Mesh(new THREE.TorusGeometry(1.25,.22,8,32),new THREE.MeshBasicMaterial({color:0xd9e5ef,transparent:true,opacity:.8}));
-  eye.rotation.x=Math.PI/2;eye.position.set(0,8.2,0);group.add(eye);
+  const cloud=new THREE.Mesh(new THREE.TorusGeometry(4,.7,10,48),new THREE.MeshStandardMaterial({color:0x59666c,transparent:true,opacity:.8}));
+  cloud.rotation.x=Math.PI/2;cloud.position.y=11;group.add(cloud);
  }else if(type==='Tsunami'){
-  const wave=new THREE.Mesh(new THREE.TorusGeometry(4,.45,10,64),new THREE.MeshBasicMaterial({color:0x83e6ff,transparent:true,opacity:.75,side:THREE.DoubleSide}));
+  const wave=new THREE.Mesh(new THREE.TorusGeometry(3.5,.5,10,64),new THREE.MeshBasicMaterial({color:0xb7eff5,transparent:true,opacity:.85,side:THREE.DoubleSide}));
   wave.rotation.x=Math.PI/2;wave.position.y=.2;group.add(wave);
  }else if(type==='Volcano'){
-  const smoke=new THREE.Mesh(new THREE.SphereGeometry(1.8,16,12),new THREE.MeshBasicMaterial({color:0x34383a,transparent:true,opacity:.72}));
-  smoke.position.set(-8,9,-7);group.add(smoke);
-  const fire=new THREE.PointLight(0xff5a1f,8,15);fire.position.set(-8,3,-7);group.add(fire);
+  const smoke=new THREE.Mesh(new THREE.SphereGeometry(1.7,14,10),new THREE.MeshStandardMaterial({color:0x363a37,transparent:true,opacity:.75}));
+  smoke.position.set(12,8,10);group.add(smoke);
+  const fire=new THREE.PointLight(0xff651e,10,18);fire.position.set(12,3,10);group.add(fire);
  }else{
-  const fire=new THREE.Mesh(new THREE.ConeGeometry(2.2,.5,20),new THREE.MeshBasicMaterial({color:0xff5a1f,transparent:true,opacity:.8}));
-  fire.position.set(10,.5,11);group.add(fire);
+  const fire=new THREE.Mesh(new THREE.ConeGeometry(1.8,.9,8),new THREE.MeshBasicMaterial({color:0xff681d,transparent:true,opacity:.85}));
+  fire.position.set(-8,2,-7);group.add(fire);
  }
- scene.add(group);worldObjects.push(group);
+ scene.add(group);
 }
 function triggerDisaster(){
  const types=['Earthquake','Typhoon','Tsunami','Volcano','Wildfire'];
  const labels=['🌎 EARTHQUAKE','🌀 TYPHOON','🌊 TSUNAMI','🌋 VOLCANIC ERUPTION','🔥 WILDFIRE'];
  const i=Math.floor(Math.random()*types.length);
- createDisaster(types[i]); log(labels[i]+' has struck the world!');
+ createDisaster(types[i]);log(labels[i]+' has struck the world!');alertWorld(labels[i]+'!');
  document.getElementById('status').textContent='⚠️ Disaster: '+types[i];
- setTimeout(()=>{if(disaster?.group){scene.remove(disaster.group);disaster=null;document.getElementById('status').textContent=running?'3D world is evolving…':'World paused.'}},7000);
+ setTimeout(()=>{if(disaster){scene.remove(disaster.group);disaster=null;document.getElementById('status').textContent=running?'World is evolving…':'World paused.'}},7000);
 }
-function log(t){const e=document.createElement('div');e.className='event';e.textContent=t;document.getElementById('events').prepend(e);while(document.getElementById('events').children.length>20)document.getElementById('events').lastChild.remove()}
-function render(){
- clans.forEach((c,i)=>c.territory=islands.filter(x=>x.clan===i).length);
- document.getElementById('viewers').textContent=viewers.toLocaleString();
- document.getElementById('cards').innerHTML=clans.map((c,i)=>'<article class="clan"><div class="name">'+emojis[i]+' '+c.name+'</div><div class="meter"><div class="fill" style="width:'+c.members/4+'%"></div></div><div class="stats">👥 '+c.members+'/400<br>👑 <span class="leader">'+c.leader+'</span><br>💎 '+c.points.toLocaleString()+' contribution<br>🏘️ '+c.villages+' villages<br>🏝️ '+c.territory+' islands</div></article>').join('');
-}
-function gift(n){const i=+document.getElementById('clan').value,c=clans[i],old=c.members;c.members=Math.min(400,c.members+n);c.points+=n*10;c.villages=Math.min(99,c.villages+Math.floor(n/25));c.leader='Top Contributor';log('🎁 '+c.name+' received +'+(c.members-old)+' members and +'+n*10+' contribution.');render()}
 function tick(){
  viewers=Math.max(100,viewers+Math.floor(Math.random()*41)-20);
- units.forEach(u=>{if(Math.random()<.45){u.userData.tx+=((Math.random()-.5)*1.8);u.userData.tz+=((Math.random()-.5)*1.8)}u.position.x+=(u.userData.tx-u.position.x)*.035;u.position.z+=(u.userData.tz-u.position.z)*.035;u.position.y=1.35+Math.sin(performance.now()*.004+u.id)*.15});
- if(Math.random()<.16){const i=Math.floor(Math.random()*3);clans[i].villages++;log('🏘️ '+clans[i].name+' expanded a village.')}
+ units.forEach(u=>{
+  if(Math.random()<.35){u.userData.tx+=((Math.random()-.5)*1.6);u.userData.tz+=((Math.random()-.5)*1.6)}
+  u.position.x+=(u.userData.tx-u.position.x)*.04;
+  u.position.z+=(u.userData.tz-u.position.z)*.04;
+  u.position.y=1.55+Math.sin(performance.now()*.004+u.userData.phase)*.08;
+ });
+ if(Math.random()<.16){const i=Math.floor(Math.random()*3);clans[i].villages++;log('🏘️ '+clans[i].name+' expanded a settlement.');}
  render();
 }
 document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>gift(+b.dataset.add));
-document.getElementById('start').onclick=()=>{running=!running;document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';document.getElementById('status').textContent=running?'3D world is evolving…':'World paused.';if(running){timer=setInterval(tick,700);log('🔴 Real 3D island simulation started.')}else{clearInterval(timer);log('⏸ Simulation paused.')}};
-document.getElementById('disaster').onclick=()=>triggerDisaster();
-document.getElementById('event').onclick=()=>{const i=Math.floor(Math.random()*3),e=['🤝 opened a sea trade route','⚔️ border conflict started','🌾 discovered fertile land','🧭 explorers crossed the islands','🏰 expanded a settlement'];log(emojis[i]+' '+names[i]+' '+e[Math.floor(Math.random()*e.length)]+'.');render()};
-document.getElementById('reset').onclick=()=>{clearInterval(timer);running=false;clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));viewers=1284;camera.position.set(0,36,42);controls.target.set(0,1,0);spawn();document.getElementById('start').textContent='▶ Start';document.getElementById('status').textContent='World paused.';document.getElementById('events').innerHTML='';log('🌏 3D Philippine island world recreated.');render()};
-
+document.getElementById('start').onclick=()=>{
+ running=!running;
+ document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';
+ document.getElementById('status').textContent=running?'World is evolving…':'World paused.';
+ if(running){timer=setInterval(tick,700);log('🔴 Civilization simulation started.');alertWorld('🔴 SIMULATION LIVE')}
+ else{clearInterval(timer);log('⏸ Simulation paused.');}
+};
+document.getElementById('event').onclick=()=>{
+ const i=Math.floor(Math.random()*3);
+ const e=['opened a sea trade route','started a border conflict','discovered fertile land','sent explorers across the islands','expanded a settlement'];
+ const msg=emojis[i]+' '+names[i]+' '+e[Math.floor(Math.random()*e.length)]+'.';
+ log(msg);alertWorld(msg);render();
+};
+document.getElementById('disaster').onclick=triggerDisaster;
+document.getElementById('reset').onclick=()=>{
+ clearInterval(timer);running=false;
+ clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
+ viewers=1284;camera.position.set(0,42,48);controls.target.set(0,0,2);
+ document.getElementById('start').textContent='▶ Start';
+ document.getElementById('status').textContent='World paused.';
+ document.getElementById('events').innerHTML='';
+ spawn();log('🌏 CLANWORLD PH map recreated.');alertWorld('🌏 WORLD RESET');render();
+};
 window.addEventListener('keydown',e=>{
  const k=e.key;
- if(['+','=','-','_','w','W','s','S','0'].includes(k)){e.preventDefault();
-  if(k==='0'){camera.position.set(0,36,42);controls.target.set(0,1,0)}
-  else if(k==='+'||k==='='||k==='w'||k==='W')camera.position.lerp(controls.target,.08);
-  else camera.position.lerp(controls.target,-.08);
+ if(['+','=','-','_','w','W','s','S','0'].includes(k)){
+  e.preventDefault();
+  const dir=(k==='+'||k==='='||k==='w'||k==='W')?-1:1;
+  if(k==='0'){camera.position.set(0,42,48);controls.target.set(0,0,2)}
+  else{
+   const v=new THREE.Vector3().subVectors(camera.position,controls.target).normalize();
+   camera.position.addScaledVector(v,dir*3.5);
+   const d=camera.position.distanceTo(controls.target);
+   if(d<13||d>92)camera.position.addScaledVector(v,-dir*3.5);
+  }
   controls.update();
  }
 });
-window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
-
-spawn();log('🌏 Real WebGL 3D Philippine islands created.');render();
-function animate(){requestAnimationFrame(animate);controls.update();if(disaster){disaster.life+=.035;const g=disaster.group;if(disaster.type==='Earthquake'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*7)*.25+disaster.life*.12);g.position.y=Math.sin(disaster.life*35)*.08}else if(disaster.type==='Typhoon'){g.rotation.y+=.025;g.position.x=Math.sin(disaster.life)*8;g.position.z=Math.cos(disaster.life)*5}else if(disaster.type==='Tsunami'){g.children[0].scale.setScalar(1+disaster.life*.55);g.children[0].material.opacity=Math.max(0,.75-disaster.life*.08)}else if(disaster.type==='Volcano'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*2)*.12+disaster.life*.08)}else{g.rotation.y+=.02;g.scale.setScalar(1+Math.sin(disaster.life*8)*.12)} }renderer.render(scene,camera)} animate();
+window.addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false);
+});
+spawn();log('🌏 Low-poly island world loaded.');render();
+function animate(){
+ requestAnimationFrame(animate);
+ controls.update();
+ if(disaster){
+  disaster.life+=.035;
+  const g=disaster.group;
+  if(disaster.type==='Earthquake'){g.children[0].scale.setScalar(1+disaster.life*.25);g.position.y=Math.sin(disaster.life*40)*.1}
+  if(disaster.type==='Typhoon'){g.rotation.y+=.025;g.position.x=Math.sin(disaster.life)*8;g.position.z=Math.cos(disaster.life)*5}
+  if(disaster.type==='Tsunami'){g.children[0].scale.setScalar(1+disaster.life*.55);g.children[0].material.opacity=Math.max(0,.85-disaster.life*.08)}
+  if(disaster.type==='Volcano'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*2)*.12+disaster.life*.06)}
+  if(disaster.type==='Wildfire'){g.rotation.y+=.02;g.scale.setScalar(1+Math.sin(disaster.life*8)*.12)}
+ }
+ renderer.render(scene,camera);
+}
+animate();
 </script>
 </body>
 </html>
