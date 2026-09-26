@@ -2,788 +2,768 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CLANWORLD PH — Build. Unite. Conquer.</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#102018;color:#fff;font-family:Inter,Segoe UI,system-ui,sans-serif}
-body{background:linear-gradient(#8dbb72,#315844)}
-.app{position:relative;width:100%;height:100%;overflow:hidden}
-#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab}
-#map:active{cursor:grabbing}
-.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 48% 42%,transparent 48%,rgba(9,18,13,.35) 100%)}
-.hud{position:absolute;z-index:10;inset:0;pointer-events:none}
-.brand{position:absolute;left:88px;top:18px;pointer-events:auto}
-.topbar{position:absolute;z-index:14;left:50%;top:12px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}
-.res{min-width:92px;padding:7px 10px;background:rgba(10,29,29,.9);border:1px solid rgba(143,213,213,.28);border-radius:7px;box-shadow:0 5px 18px #0007;font-size:10px;font-weight:800;text-align:center}
-.res b{display:block;font-size:14px;color:#f5f0c9;margin-top:2px}
-.leftnav{position:absolute;z-index:13;left:10px;top:90px;width:178px;pointer-events:auto}
-.navtitle{padding:8px 12px;background:#0f1f1f;border:1px solid #365353;border-radius:7px 7px 0 0;font-size:10px;font-weight:900;letter-spacing:.12em;color:#86dbe0}
-.navbtn{width:100%;display:block;text-align:left;padding:10px 12px;background:rgba(15,31,31,.92);border:0;border-bottom:1px solid #294040;color:#dbe9e5;font-size:11px;font-weight:750;cursor:pointer}
-.navbtn:hover{background:#183939;color:#fff}
-.navbtn.active{background:#1b4c4f;color:#9eeaf0}
-.minimap{position:absolute;z-index:13;right:18px;top:76px;width:148px;height:154px;padding:8px;background:rgba(10,27,28,.9);border:1px solid #4b6d6d;border-radius:8px;box-shadow:0 10px 28px #0008;pointer-events:none}
-.minimap canvas{width:100%;height:100%;display:block;border-radius:4px}
-.legend{position:absolute;z-index:13;left:50%;bottom:8px;transform:translateX(-50%);display:flex;gap:13px;align-items:center;padding:8px 14px;background:rgba(9,24,24,.94);border:1px solid #42605d;border-radius:8px;box-shadow:0 8px 25px #0009;pointer-events:none;font-size:9px;font-weight:800;white-space:nowrap}
-.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
-.daycycle{position:absolute;z-index:14;left:50%;top:59px;transform:translateX(-50%);padding:4px 9px;background:#102a2bde;border:1px solid #406363;border-radius:6px;font-size:9px;font-weight:900;pointer-events:none}
-.brand .kicker{font-size:11px;font-weight:900;letter-spacing:.16em;color:#fff;text-shadow:0 2px 8px #0008}
-.brand h1{margin:2px 0 0;font-size:34px;line-height:1;font-weight:950;letter-spacing:-.04em;text-shadow:0 3px 0 #263629,0 7px 18px #0009}
-.brand p{margin:7px 0 0;font-size:12px;font-weight:700;color:#edf7e7;text-shadow:0 2px 6px #0008}
-.live{position:absolute;right:22px;top:18px;padding:9px 13px;border:2px solid rgba(255,255,255,.3);border-radius:9px;background:rgba(18,35,26,.78);box-shadow:0 5px 20px #0005;backdrop-filter:blur(8px);font-size:12px;font-weight:800;pointer-events:auto}
-.liveDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4f4f;box-shadow:0 0 12px #ff4f4f;margin-right:6px}
-.panel{background:linear-gradient(180deg,rgba(30,46,34,.94),rgba(12,25,19,.94));border:2px solid rgba(255,255,255,.12);border-radius:10px;box-shadow:0 12px 35px #0008, inset 0 1px rgba(255,255,255,.08);backdrop-filter:blur(10px)}
-.side{position:absolute;z-index:12;right:18px;top:76px;width:286px;max-height:calc(100vh - 94px);overflow:auto;display:flex;flex-direction:column;gap:9px;pointer-events:auto}
-.panel{padding:12px}
-.panelTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;color:#f3f7ee}
-.sub{font-size:11px;color:#aab9a9;line-height:1.45}
-select,.btn{font:inherit;color:#f3f7ee;background:#20382a;border:1px solid #506853;border-radius:7px;min-height:36px;padding:8px 10px;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.06)}
-select{width:100%;margin:8px 0}
-.btn:hover,select:hover{border-color:#c9e48e;background:#294633}
-.gifts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.gift{font-size:12px;font-weight:850;padding:8px 4px}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.status{margin-top:8px;padding:8px;border-radius:6px;background:#0a1710;color:#c7d8c3;font-size:11px}
-.events{height:190px;overflow:auto;display:flex;flex-direction:column;gap:5px}
-.event{padding:8px;border-left:3px solid #87c76c;background:#172a1d;border-radius:5px;color:#dce8d8;font-size:11px;line-height:1.35}
-.cards{position:absolute;z-index:11;left:18px;bottom:18px;display:grid;grid-template-columns:repeat(3,190px);gap:8px;pointer-events:auto}
-.clan{padding:10px 11px;border-radius:9px;background:linear-gradient(180deg,rgba(27,45,31,.96),rgba(11,23,16,.96));border:2px solid rgba(255,255,255,.12);box-shadow:0 10px 25px #0007}
-.clanHead{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:950}
-.badge{padding:3px 6px;border-radius:5px;background:#0005;font-size:9px;color:#dcebd7}
-.meter{height:7px;background:#07110b;border-radius:99px;margin:8px 0 7px;overflow:hidden;border:1px solid #2e4732}
-.fill{height:100%;background:linear-gradient(90deg,#77b95f,#d2e88b)}
-.stats{font-size:10px;line-height:1.55;color:#b8c8b4}
-.leader{color:#f0d27c}
-.alert{position:absolute;z-index:15;left:50%;top:18px;transform:translateX(-50%) translateY(-90px);opacity:0;padding:10px 18px;border-radius:8px;background:#27170d;border:2px solid #e19b4b;box-shadow:0 10px 30px #0008;font-size:12px;font-weight:950;letter-spacing:.04em;transition:.25s}
-.alert.show{transform:translateX(-50%) translateY(0);opacity:1}
-.hint{position:absolute;z-index:10;left:50%;bottom:20px;transform:translateX(-50%);padding:7px 11px;border-radius:6px;background:#102019cc;border:1px solid #ffffff20;color:#d6e3d2;font-size:10px;font-weight:700;pointer-events:none}
-.credit{position:absolute;right:20px;bottom:18px;font-size:10px;font-weight:900;letter-spacing:.12em;color:#eaf4df;text-shadow:0 2px 7px #0009;opacity:.85;pointer-events:none}
-.credit span{color:#cfe98a}
-.pixelBadge{position:absolute;left:18px;bottom:18px;font-size:9px;font-weight:900;letter-spacing:.1em;color:#dcebcf;background:#102019dd;border:1px solid #547052;padding:6px 8px;border-radius:4px;box-shadow:0 5px 15px #0008}
-@media(max-width:900px){
- .side{width:250px;right:9px;top:70px;max-height:48vh}
- .cards{left:9px;bottom:9px;grid-template-columns:repeat(2,180px)}
- .cards .clan:last-child{display:none}
- .brand h1{font-size:28px}
-}
-@media(max-width:650px){
- .side{left:9px;right:9px;width:auto;top:auto;bottom:92px;max-height:38vh}
- .cards{grid-template-columns:1fr 1fr;width:calc(100% - 18px)}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#071f2b;color:#f4f7e9;font-family:Inter,Segoe UI,system-ui,sans-serif}
+body{image-rendering:pixelated}
+.app{position:relative;width:100%;height:100%;overflow:hidden;background:#071f2b}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none;image-rendering:pixelated}
+#map.dragging{cursor:grabbing}
+.hud{position:absolute;inset:0;pointer-events:none;z-index:10}
+.pointer{pointer-events:auto}
+.brand{position:absolute;left:14px;top:12px;text-shadow:0 2px 0 #000,0 4px 10px #0008}
+.kicker{font-size:9px;font-weight:1000;letter-spacing:.16em;color:#bde7c0}
+.brand h1{margin:2px 0 0;font-size:26px;line-height:.95;font-weight:1000;letter-spacing:.02em}
+.brand p{margin:5px 0 0;font-size:10px;font-weight:900;color:#e6f2d7}
+.topbar{position:absolute;left:50%;top:10px;transform:translateX(-50%);display:flex;gap:5px}
+.res{min-width:78px;padding:5px 7px;background:#0b2730ee;border:1px solid #42707a;border-radius:5px;box-shadow:0 4px 14px #0008;font-size:8px;font-weight:900;text-align:center}
+.res b{display:block;font-size:12px;margin-top:2px;color:#fff7c7}
+.live{position:absolute;right:14px;top:12px;background:#122a25e8;border:1px solid #648170;border-radius:5px;padding:7px 9px;font-size:10px;font-weight:950;box-shadow:0 4px 14px #0008}
+.liveDot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 8px #ff4d4d;margin-right:5px}
+.sizeBadge{position:absolute;right:14px;top:51px;background:#08232ddf;border:1px solid #3b6770;border-radius:5px;padding:5px 8px;font-size:8px;font-weight:950;color:#bfe7e0}
+.leftnav{position:absolute;left:12px;top:112px;width:154px}
+.navtitle{padding:7px 9px;background:#0b2428f5;border:1px solid #40656a;border-bottom:0;border-radius:5px 5px 0 0;font-size:9px;font-weight:1000;letter-spacing:.12em}
+.navbtn{width:100%;display:block;text-align:left;padding:8px 10px;background:#0c2429ee;color:#dce8df;border:0;border-bottom:1px solid #28484c;font-size:9px;font-weight:900;cursor:pointer}
+.navbtn:hover,.navbtn.active{background:#194149;color:#c8f0da}
+.side{position:absolute;right:12px;top:84px;width:270px;max-height:calc(100vh - 98px);overflow:auto;display:flex;flex-direction:column;gap:7px}
+.panel{background:#0b2320ee;border:1px solid #45645a;border-radius:6px;box-shadow:0 8px 22px #0009;padding:9px;backdrop-filter:blur(7px)}
+.panelTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:10px;font-weight:1000;letter-spacing:.06em;text-transform:uppercase}
+.sub{font-size:9px;line-height:1.35;color:#b8c8bb}
+select,.btn{font:inherit;color:#f3f7ef;background:#18372f;border:1px solid #4d6d58;border-radius:4px;min-height:30px;padding:6px 8px;cursor:pointer}
+select{width:100%;margin:7px 0}
+.btn:hover{background:#23513f;border-color:#a7d071}
+.gifts{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.gift{font-size:10px;font-weight:950}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.status{margin-top:6px;padding:6px;background:#071813;border:1px solid #274a39;border-radius:4px;font-size:9px;color:#c4d4c0}
+.events{height:150px;overflow:auto;display:flex;flex-direction:column;gap:4px}
+.event{padding:6px;border-left:2px solid #83be6b;background:#102b20;border-radius:3px;font-size:9px;line-height:1.25;color:#d9ead9}
+.minimap{position:absolute;right:296px;top:84px;width:132px;height:132px;padding:6px;background:#0a2329ed;border:1px solid #46666a;border-radius:6px;box-shadow:0 8px 20px #0008}
+#mini{width:100%;height:100%;display:block;image-rendering:pixelated}
+.day{position:absolute;left:50%;top:58px;transform:translateX(-50%);padding:4px 7px;background:#0b2a31df;border:1px solid #416b6c;border-radius:4px;font-size:8px;font-weight:1000}
+.cards{position:absolute;left:12px;bottom:12px;display:grid;grid-template-columns:repeat(3,175px);gap:6px}
+.clan{padding:7px 8px;background:#0c241bee;border:1px solid #4a6250;border-radius:5px;box-shadow:0 7px 18px #0008}
+.clanHead{display:flex;justify-content:space-between;gap:6px;font-size:10px;font-weight:1000}
+.badge{padding:2px 4px;border-radius:3px;background:#0006;color:#d9e7d8;font-size:7px}
+.meter{height:6px;background:#05100b;border:1px solid #2e4938;border-radius:2px;margin:5px 0;overflow:hidden}
+.fill{height:100%;background:#9dca6f}
+.stats{font-size:8px;line-height:1.45;color:#bacbb8}
+.leader{color:#f1d981}
+.legend{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);display:flex;gap:10px;align-items:center;padding:6px 8px;background:#082026ee;border:1px solid #3c5b60;border-radius:4px;font-size:8px;font-weight:900;white-space:nowrap}
+.leg i{display:inline-block;width:9px;height:9px;margin-right:3px;vertical-align:-2px;border:1px solid #0004}
+.credit{position:absolute;right:14px;bottom:12px;font-size:8px;font-weight:1000;letter-spacing:.08em;text-shadow:0 2px 5px #000}
+.credit span{color:#b7de83}
+.help{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);padding:5px 8px;background:#092126d9;border:1px solid #3f5e60;border-radius:4px;font-size:8px;font-weight:900;color:#cad8cf}
+.alert{position:absolute;left:50%;top:15px;transform:translate(-50%,-80px);opacity:0;padding:8px 13px;background:#32170d;border:2px solid #dc9850;border-radius:5px;font-size:10px;font-weight:1000;transition:.22s;box-shadow:0 8px 22px #000a}
+.alert.show{transform:translate(-50%,0);opacity:1}
+@media(max-width:980px){
+ .topbar{display:none}
+ .brand h1{font-size:21px}
+ .side{width:230px}
+ .minimap{right:252px}
+ .cards{grid-template-columns:repeat(3,150px)}
  .clan{min-width:0}
- .hint{display:none}
+ .legend{max-width:60%;overflow:hidden}
+}
+@media(max-width:700px){
+ .leftnav{top:102px;width:125px}
+ .side{left:8px;right:8px;top:auto;bottom:86px;width:auto;max-height:28vh}
+ .minimap{right:8px;top:8px;width:112px;height:112px}
+ .sizeBadge{right:8px;top:126px}
+ .cards{left:8px;bottom:10px;grid-template-columns:1fr 1fr;width:calc(100% - 16px)}
+ .cards .clan:last-child{display:none}
+ .help,.legend{display:none}
+ .credit{right:8px;bottom:64px}
 }
 </style>
 </head>
 <body>
 <div class="app">
 <canvas id="map"></canvas>
-<div class="vignette"></div>
 <div class="hud">
-  <div class="topbar">
-    <div class="res">🟡 GOLD<b id="goldUI">2,450</b></div>
-    <div class="res">🪵 WOOD<b id="woodUI">5,320</b></div>
-    <div class="res">🌾 FOOD<b id="foodUI">8,760</b></div>
-    <div class="res">🐟 FISH<b id="fishUI">4,210</b></div>
-    <div class="res">👥 POPULATION<b id="popUI">12,540</b></div>
-  </div>
-  <div class="leftnav">
-    <div class="navtitle">CLANWORLD PH</div>
-    <button class="navbtn active">🌍 Map</button>
-    <button class="navbtn">⚔ Clans</button>
-    <button class="navbtn">🏠 Villages</button>
-    <button class="navbtn">🪙 Resources</button>
-    <button class="navbtn">👥 Units</button>
-    <button class="navbtn">🔨 Build</button>
-    <button class="navbtn">🌋 Disaster</button>
-    <button class="navbtn">⚑ Events</button>
-  </div>
-  <div class="minimap"><canvas id="mini"></canvas></div>
-  <div class="daycycle" id="daycycle">☀ DAY 124 · 12:30</div>
   <div class="brand">
     <div class="kicker">PIXEL GOD SIMULATION</div>
     <h1>CLANWORLD PH</h1>
     <p>Build. Unite. Conquer.</p>
   </div>
-  <div class="live"><span class="liveDot"></span><b id="viewers">1,284</b> VIEWERS</div>
-  <div id="alert" class="alert">⚠️ WORLD EVENT</div>
+  <div class="topbar">
+    <div class="res">🟡 GOLD<b id="goldUI">2,450</b></div>
+    <div class="res">🪵 WOOD<b id="woodUI">5,320</b></div>
+    <div class="res">🌾 FOOD<b id="foodUI">8,760</b></div>
+    <div class="res">🐟 FISH<b id="fishUI">4,210</b></div>
+    <div class="res">👥 POP<b id="popUI">12,540</b></div>
+  </div>
+  <div class="live"><span class="liveDot"></span><span id="viewers">1,284</span> LIVE</div>
+  <div class="sizeBadge">LARGE · 320 × 320 · 102,400 TILES · ZONE 5×5</div>
+  <div class="day" id="dayUI">☀ DAY 124 · 12:30</div>
+  <div class="leftnav pointer">
+    <div class="navtitle">CLANWORLD PH</div>
+    <button class="navbtn active">🌍 MAP</button>
+    <button class="navbtn">⚔ CLANS</button>
+    <button class="navbtn">🏠 VILLAGES</button>
+    <button class="navbtn">🪙 RESOURCES</button>
+    <button class="navbtn">👥 UNITS</button>
+    <button class="navbtn">🔨 BUILD</button>
+    <button class="navbtn">🌋 DISASTER</button>
+    <button class="navbtn">⚑ EVENTS</button>
+  </div>
+  <div class="minimap"><canvas id="mini"></canvas></div>
+
+  <aside class="side">
+    <section class="panel">
+      <div class="panelTitle"><span>🎁 Clan Gifts</span><span class="badge">MAX 400</span></div>
+      <div class="sub">Gifts add clan members and contribution points. Highest contribution becomes the displayed leader.</div>
+      <select id="clan">
+        <option value="0">Luzon</option>
+        <option value="1">Visayas</option>
+        <option value="2">Mindanao</option>
+      </select>
+      <div class="gifts">
+        <button class="btn gift" data-add="1">🌹 +1</button>
+        <button class="btn gift" data-add="3">🎁 +3</button>
+        <button class="btn gift" data-add="10">💎 +10</button>
+        <button class="btn gift" data-add="25">🏰 +25</button>
+        <button class="btn gift" data-add="50">🐉 +50</button>
+        <button class="btn gift" data-add="100">👑 +100</button>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panelTitle"><span>World Controls</span><span class="badge">PIXEL</span></div>
+      <div class="actions">
+        <button class="btn" id="start">▶ Start</button>
+        <button class="btn" id="event">⚡ Event</button>
+        <button class="btn" id="disaster">🌋 Disaster</button>
+        <button class="btn" id="reset">↺ Reset</button>
+      </div>
+      <div class="status" id="status">World paused.</div>
+    </section>
+    <section class="panel">
+      <div class="panelTitle">📜 Live Feed</div>
+      <div class="events" id="events"></div>
+    </section>
+  </aside>
+
   <div class="cards" id="cards"></div>
-  <div class="hint">🟡 GOLD · 🌲 WOOD · 🌾 FOOD · 🐟 FISH &nbsp; | &nbsp; DRAG TO ROTATE · W/S OR +/− TO ZOOM · 0 RESET</div>
+
+  <div class="help">DRAG = PAN · WHEEL / + − = ZOOM · 0 = RESET VIEW · PIXEL TILES STAY SHARP</div>
   <div class="legend">
- <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
- <span class="leg"><i style="background:#2ec5d3"></i>Shallow / Reef</span>
- <span class="leg"><i style="background:#dfc38c"></i>Beach</span>
- <span class="leg"><i style="background:#9fbe68"></i>Rice Fields</span>
- <span class="leg"><i style="background:#315b3a"></i>Forest</span>
- <span class="leg">▲ Mountains</span>
- <span class="leg">⌂ Villages</span>
- <span class="leg">● Units</span>
-</div>
-<div class="pixelBadge">PIXEL WORLD · TILE SIMULATION</div>
-<div class="credit">BUILT BY <span>TUBAL HUB</span></div>
-</div>
-
-<aside class="side">
- <section class="panel">
-  <div class="panelTitle"><span>🎁 Clan Gifts</span><span class="badge">MAX 400</span></div>
-  <div class="sub">Gifts grow population and contribution. The top contributor becomes clan leader.</div>
-  <select id="clan"><option value="0">Luzon</option><option value="1">Visayas</option><option value="2">Mindanao</option></select>
-  <div class="gifts">
-   <button class="btn gift" data-add="1">🌹 +1</button>
-   <button class="btn gift" data-add="3">🎁 +3</button>
-   <button class="btn gift" data-add="10">💎 +10</button>
-   <button class="btn gift" data-add="25">🏰 +25</button>
-   <button class="btn gift" data-add="50">🐉 +50</button>
-   <button class="btn gift" data-add="100">👑 +100</button>
+    <span class="leg"><i style="background:#0a3a4a"></i>Ocean</span>
+    <span class="leg"><i style="background:#2ec5d3"></i>Shallow</span>
+    <span class="leg"><i style="background:#dfc38c"></i>Beach</span>
+    <span class="leg"><i style="background:#a9cc6e"></i>Rice</span>
+    <span class="leg"><i style="background:#315b3a"></i>Forest</span>
+    <span>▲ Mountain</span>
+    <span>⌂ Village</span>
+    <span>● Unit</span>
   </div>
- </section>
- <section class="panel">
-  <div class="panelTitle">World Controls</div>
-  <div class="actions">
-   <button class="btn" id="start">▶ Start</button>
-   <button class="btn" id="event">⚡ Event</button>
-   <button class="btn" id="disaster">🌋 Disaster</button>
-   <button class="btn" id="reset">↺ Reset</button>
-  </div>
-  <div class="status" id="status">World paused.</div>
- </section>
- <section class="panel">
-  <div class="panelTitle">📜 Live Feed</div>
-  <div class="events" id="events"></div>
- </section>
-</aside>
+  <div class="credit">BUILT BY <span>TUBAL HUB</span></div>
+  <div id="alert" class="alert">⚠ WORLD EVENT</div>
+</div>
 </div>
 
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
-<script type="module">
-import * as THREE from 'three';
-import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+<script>
+'use strict';
 
-const canvas=document.getElementById('map');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
-renderer.setPixelRatio(1);
-const PIXEL_SCALE=2;
-function setPixelViewport(){
- const pw=Math.max(320,Math.floor(innerWidth/PIXEL_SCALE));
- const ph=Math.max(256,Math.floor(innerHeight/PIXEL_SCALE));
- renderer.setSize(pw,ph,false);
- renderer.domElement.style.width='100%';
- renderer.domElement.style.height='100%';
- renderer.domElement.style.imageRendering='pixelated';
-}
-setPixelViewport();
-renderer.shadowMap.enabled=true;
-renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.12;
+/* ------------------------------------------------------------------
+   CLANWORLD PH — 320×320 tile world
+   Original pixel-art god-simulation aesthetic. No copied game assets.
+-------------------------------------------------------------------*/
+const W=320,H=320,ZONE=5;
+const mapCanvas=document.getElementById('map');
+const ctx=mapCanvas.getContext('2d',{alpha:false});
+const layer=document.createElement('canvas');
+layer.width=W;layer.height=H;
+const lctx=layer.getContext('2d',{alpha:false});
+lctx.imageSmoothingEnabled=false;
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x123f52);
-scene.fog=new THREE.Fog(0x0a3a4a,70,180);
+const mini=document.getElementById('mini');
+const mctx=mini.getContext('2d');
+mctx.imageSmoothingEnabled=false;
 
-const camera=new THREE.OrthographicCamera(-32,32,24,-24,.1,260);
-camera.position.set(0,70,0);
-camera.lookAt(0,0,0);
-
-const controls=new OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true;
-controls.dampingFactor=.06;
-controls.minDistance=13;
-controls.maxDistance=92;
-controls.maxPolarAngle=.001;
-controls.minPolarAngle=.001;
-controls.enableRotate=false;
-controls.screenSpacePanning=true;
-controls.target.set(0,0,1);
-
-const hemi=new THREE.AmbientLight(0xffffff,1);
-scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xfff2c9,4.2);
-sun.position.set(-28,55,22);
-sun.castShadow=false;
-sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;
-scene.add(sun);sun.visible=false;
-const rim=new THREE.DirectionalLight(0xb6e7ff,1.15);
-let dayTime=12.5;
-
-rim.position.set(35,22,-30);
-scene.add(rim);rim.visible=false;
+const ocean='#0a3a4a', shallow='#2ec5d3', reef='#47e1d7';
+const beach='#dfc38c', grass='#86b85b', rice='#a9cc6e', forest='#315b3a';
+const mountain='#77736b', snow='#ededdf', lava='#f26324';
+const road='#8b6a43', river='#2a9daf', riverDark='#1e7480';
 
 const names=['Luzon','Visayas','Mindanao'];
-const colors=[0x668f4d,0x628ea5,0x8e7049];
-const accents=[0x91d26d,0x82c8ec,0xf1c16e];
-const emojis=['🟢','🔵','🟠'];
-let clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
-let running=false,timer=null,viewers=1284;
-let worldObjects=[],units=[],villages=[],animated=[],disaster=null;
+const clanColors=['#6b9e47','#4e89a8','#9a7446'];
+const unitColors=['#c5ef75','#6bd3ff','#ffc260'];
+const clanEmojis=['🟢','🔵','🟠'];
+let clans=[];
+let terrain=new Uint8Array(W*H);   // 0 ocean,1 shallow,2 beach,3 grass,4 rice,5 forest,6 mountain,7 snow,8 river
+let owner=new Int8Array(W*H); owner.fill(-1);
+let mountainTiles=[];
+let forestTiles=[];
+let riceTiles=[];
+let fishTiles=[];
+let goldTiles=[];
+let volcanoes=[];
+let villages=[];
+let units=[];
+let rivers=[];
+let roads=[];
+let day=12.5;
+let viewers=1284;
+let running=false;
+let timer=null;
+let camera={x:160,y:160,zoom:1};
+let pointer={down:false,lastX:0,lastY:0};
+let disaster=null;
+let shake=0;
+
+function idx(x,y){return y*W+x}
+function inMap(x,y){return x>=0&&x<W&&y>=0&&y<H}
+function hash(x,y,s=0){return Math.abs(Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453)%1}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function isLandCode(c){return c>=2}
+function neighbors(x,y){
+  return [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
+}
+function pointInPoly(x,y,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][0],yi=poly[i][1],xj=poly[j][0],yj=poly[j][1];
+    const hit=((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi);
+    if(hit)inside=!inside;
+  }
+  return inside;
+}
+function polyFill(poly,clan,seed){
+  const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);
+  const x0=Math.max(0,Math.floor(Math.min(...xs)-2)),x1=Math.min(W-1,Math.ceil(Math.max(...xs)+2));
+  const y0=Math.max(0,Math.floor(Math.min(...ys)-2)),y1=Math.min(H-1,Math.ceil(Math.max(...ys)+2));
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    if(pointInPoly(x+.5,y+.5,poly)){
+      terrain[idx(x,y)]=3;
+      owner[idx(x,y)]=clan;
+    }
+  }
+}
+function setTile(x,y,c,cl=-2){
+  if(!inMap(x,y))return;
+  terrain[idx(x,y)]=c;
+  if(cl!==-2)owner[idx(x,y)]=cl;
+}
+function lineTiles(points,code){
+  for(let i=0;i<points.length-1;i++){
+    let [x0,y0]=points[i],[x1,y1]=points[i+1];
+    x0=Math.round(x0);y0=Math.round(y0);x1=Math.round(x1);y1=Math.round(y1);
+    const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+    let err=dx-dy;
+    while(true){
+      setTile(x0,y0,code);
+      setTile(x0+1,y0,code);
+      setTile(x0,y0+1,code);
+      if(x0===x1&&y0===y1)break;
+      const e2=2*err;
+      if(e2>-dy){err-=dy;x0+=sx}
+      if(e2<dx){err+=dx;y0+=sy}
+    }
+  }
+}
+function nearestLand(x,y){
+  for(let r=0;r<9;r++){
+    for(let oy=-r;oy<=r;oy++)for(let ox=-r;ox<=r;ox++){
+      const tx=Math.round(x+ox),ty=Math.round(y+oy);
+      if(inMap(tx,ty)&&isLandCode(terrain[idx(tx,ty)]))return [tx,ty];
+    }
+  }
+  return [Math.round(x),Math.round(y)];
+}
 
 const islands=[
- {name:'Luzon',clan:0,x:-8,z:-7,w:15,d:17,seed:4,coast:0.2},
- {name:'Palawan',clan:0,x:-19,z:3,w:5,d:14,seed:9,coast:.1},
- {name:'Samar-Leyte',clan:1,x:9,z:-2,w:8,d:10,seed:12,coast:.1},
- {name:'Panay-Negros-Cebu',clan:1,x:1,z:5,w:12,d:6,seed:17,coast:.15},
- {name:'Mindanao',clan:2,x:11,z:11,w:16,d:15,seed:22,coast:.2},
- {name:'Bohol',clan:1,x:2,z:11,w:5,d:4,seed:28,coast:.05},
- {name:'Mindoro',clan:0,x:-4,z:5,w:5,d:8,seed:33,coast:.08}
+  {name:'Luzon',clan:0,poly:[[86,36],[112,27],[139,31],[160,46],[165,69],[154,88],[158,111],[148,126],[134,118],[119,124],[106,115],[97,97],[82,85],[77,64]],seed:11},
+  {name:'Palawan',clan:0,poly:[[61,113],[66,125],[62,140],[56,157],[51,176],[45,193],[39,205],[34,197],[38,181],[42,164],[47,149],[52,132]],seed:17},
+  {name:'Mindoro',clan:0,poly:[[77,120],[87,115],[95,122],[96,138],[88,148],[77,146],[71,135]],seed:19},
+  {name:'Samar',clan:1,poly:[[168,99],[181,91],[194,100],[200,118],[196,135],[184,140],[174,130],[166,116]],seed:23},
+  {name:'Leyte',clan:1,poly:[[154,112],[165,108],[174,118],[171,133],[162,145],[151,139],[148,126]],seed:29},
+  {name:'Panay',clan:1,poly:[[125,138],[143,134],[154,143],[151,158],[139,166],[123,160],[117,149]],seed:31},
+  {name:'Negros',clan:1,poly:[[150,147],[164,143],[170,154],[166,174],[154,178],[145,167]],seed:37},
+  {name:'Cebu',clan:1,poly:[[174,145],[182,143],[186,158],[183,177],[177,183],[171,173]],seed:41},
+  {name:'Bohol',clan:1,poly:[[180,181],[190,179],[198,184],[196,193],[184,197],[176,191]],seed:43},
+  {name:'Mindanao',clan:2,poly:[[144,189],[164,180],[189,184],[212,193],[233,207],[243,227],[240,248],[225,267],[202,278],[177,274],[158,260],[146,243],[138,220]],seed:47},
+  {name:'Siargao',clan:2,poly:[[225,165],[234,160],[240,169],[238,180],[230,181],[224,174]],seed:53},
+  {name:'Basilan',clan:2,poly:[[160,276],[172,273],[180,280],[177,291],[165,293],[157,286]],seed:59}
 ];
 
-function terrainTexture(base,accent1,accent2){
- const c=document.createElement('canvas');c.width=32;c.height=32;
- const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.fillStyle=base;x.fillRect(0,0,32,32);
- for(let i=0;i<150;i++){
-  const px=Math.floor(Math.random()*32),py=Math.floor(Math.random()*32);
-  const s=Math.random()>.8?2:1;
-  x.globalAlpha=.35+Math.random()*.45;
-  x.fillStyle=Math.random()>.5?accent1:accent2;
-  x.fillRect(px,py,s,s);
- }
- x.globalAlpha=1;
- const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestMipmapNearestFilter;t.generateMipmaps=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;
- return t;
-}
-const texGrass=terrainTexture('#8fb85f','#b6cf75','#668e4d');
-const texForest=terrainTexture('#315b3a','#416f42','#244b31');
-const texBrown=terrainTexture('#78654b','#9b835f','#4f4739');
-const texBeach=terrainTexture('#dfc38c','#f0dcae','#c9aa72');
-function hash(x,y,s){return Math.abs(Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453)%1}
-function pts(isl,scale=1){
- const out=[];
- const n=32;
- const snap=v=>Math.round(v*2)/2;
- for(let i=0;i<n;i++){
-  const a=i/n*Math.PI*2;
-  const wob=.80+.17*hash(i,isl.seed,isl.seed+3);
-  const x=isl.x+Math.cos(a)*isl.w*.5*wob*scale;
-  const z=isl.z+Math.sin(a)*isl.d*.5*wob*scale;
-  out.push(new THREE.Vector2(snap(x),snap(z)));
- }
- return out;
-}
-function shapeGeometry(points,height=1){
- const s=new THREE.Shape();
- s.moveTo(points[0].x,points[0].y);
- for(let i=1;i<points.length;i++)s.lineTo(points[i].x,points[i].y);
- s.closePath();
- const g=new THREE.ExtrudeGeometry(s,{depth:height,bevelEnabled:true,bevelSegments:2,bevelSize:.18,bevelThickness:.18,curveSegments:2});
- g.rotateX(-Math.PI/2);
- return g;
-}
-function polyMesh(points,y,material,height=1){
- const m=new THREE.Mesh(shapeGeometry(points,height),material);
- m.position.y=y;
- m.castShadow=true;m.receiveShadow=true;
- scene.add(m);worldObjects.push(m);
- return m;
-}
-function ringTerrain(isl,scale,y,color,height){
- const p=pts(isl,scale);
- const map=color===0x9cba6d?texGrass:color===0x6f9c59?texForest:color===0xe8d59a?texBeach:texBrown;
- const mat=new THREE.MeshBasicMaterial({color,transparent:false});
- return polyMesh(p,y,mat,height);
-}
-function addGold(isl){
- const count=Math.max(2,Math.floor(isl.w/3.5));
- for(let i=0;i<count;i++){
-  const x=isl.x+(hash(i,isl.seed,120)-.5)*isl.w*.48;
-  const z=isl.z+(hash(i,isl.seed,121)-.5)*isl.d*.42;
-  const rock=new THREE.Mesh(
-   new THREE.DodecahedronGeometry(.16+hash(i,isl.seed,122)*.09,0),
-   new THREE.MeshStandardMaterial({color:0x806b42,roughness:1})
-  );
-  rock.position.set(x,1.42,z);rock.scale.y=.55;scene.add(rock);worldObjects.push(rock);
-  const nugget=new THREE.Mesh(
-   new THREE.SphereGeometry(.055+hash(i,isl.seed,123)*.035,8,6),
-   new THREE.MeshStandardMaterial({color:0xffd83d,emissive:0xffb300,emissiveIntensity:1.6,roughness:.25,metalness:.45})
-  );
-  nugget.position.set(x+.06,1.59,z-.02);scene.add(nugget);worldObjects.push(nugget);
-  animated.push({type:'gold',object:nugget,phase:hash(i,isl.seed,124)*6.28});
- }
-}
-function addWoodland(isl){
- const count=Math.max(2,Math.floor(isl.w/2.7));
- for(let i=0;i<count;i++){
-  const x=isl.x+(hash(i,isl.seed,130)-.5)*isl.w*.55;
-  const z=isl.z+(hash(i,isl.seed,131)-.5)*isl.d*.52;
-  const patch=new THREE.Mesh(
-   new THREE.CircleGeometry(.85+hash(i,isl.seed,132)*.5,10),
-   new THREE.MeshStandardMaterial({color:0x315b3a,roughness:1})
-  );
-  patch.rotation.x=-Math.PI/2;patch.position.set(x,1.44,z);scene.add(patch);worldObjects.push(patch);
-  for(let t=0;t<3;t++){
-   const tx=x+(hash(t,i,133)-.5)*1.2,tz=z+(hash(t,i,134)-.5)*1.2;
-   addTree(tx,tz,.58+hash(t,i,135)*.3,1);
+function initWorld(){
+  terrain.fill(0);owner.fill(-1);
+  mountainTiles=[];forestTiles=[];riceTiles=[];fishTiles=[];goldTiles=[];volcanoes=[];villages=[];units=[];rivers=[];roads=[];
+  clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
+
+  islands.forEach(i=>polyFill(i.poly,i.clan,i.seed));
+
+  // Coast and shallow-water ring.
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const k=idx(x,y);
+    if(terrain[k]===3){
+      let coast=false;
+      for(const [nx,ny] of neighbors(x,y)){
+        if(inMap(nx,ny)&&terrain[idx(nx,ny)]===0){coast=true;break}
+      }
+      if(coast)terrain[k]=2;
+    }
   }
- }
-}
-function addFarmland(isl){
- const count=Math.max(2,Math.floor(isl.w/3.2));
- for(let i=0;i<count;i++){
-  const x=isl.x+(hash(i,isl.seed,140)-.5)*isl.w*.48;
-  const z=isl.z+(hash(i,isl.seed,141)-.5)*isl.d*.42;
-  const patch=new THREE.Mesh(
-   new THREE.CircleGeometry(.72+hash(i,isl.seed,142)*.38,8),
-   new THREE.MeshStandardMaterial({color:0xb6ce70,roughness:1})
-  );
-  patch.rotation.x=-Math.PI/2;patch.position.set(x,1.45,z);scene.add(patch);worldObjects.push(patch);
-  for(let row=0;row<3;row++){
-   const line=new THREE.Mesh(
-    new THREE.BoxGeometry(.9,.035,.045),
-    new THREE.MeshStandardMaterial({color:0x71994c,roughness:1})
-   );
-   line.position.set(x,1.49,z-.28+row*.28);scene.add(line);worldObjects.push(line);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(terrain[idx(x,y)]!==0)continue;
+    let near=false;
+    for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){
+      const nx=x+ox,ny=y+oy;
+      if(inMap(nx,ny)&&terrain[idx(nx,ny)]===2)near=true;
+    }
+    if(near)terrain[idx(x,y)]=1;
   }
- }
-}
-function addRiver(isl,offset=0){
- const start=new THREE.Vector3(isl.x+offset,3.4,isl.z-isl.d*.18);
- const end=new THREE.Vector3(isl.x+isl.w*.2+offset,1.35,isl.z+isl.d*.46);
- const mid1=new THREE.Vector3(isl.x-isl.w*.15+offset,2.7,isl.z+isl.d*.08);
- const mid2=new THREE.Vector3(isl.x+isl.w*.1+offset,1.9,isl.z+isl.d*.28);
- const curve=new THREE.CatmullRomCurve3([start,mid1,mid2,end]);
- const river=new THREE.Mesh(new THREE.TubeGeometry(curve,28,.11,6,false),
-  new THREE.MeshStandardMaterial({color:0x2394a4,roughness:.25,metalness:.05}));
- river.castShadow=true;scene.add(river);worldObjects.push(river);
- animated.push({type:'river',object:river,phase:hash(isl.x,isl.z,180)*6.28});
-}
-function addLake(isl){
- const lake=new THREE.Mesh(new THREE.CircleGeometry(Math.min(1.7,isl.w*.12),24),
-  new THREE.MeshStandardMaterial({color:0x248fa0,roughness:.2,metalness:.05}));
- lake.rotation.x=-Math.PI/2;lake.position.set(isl.x-isl.w*.15,1.48,isl.z+isl.d*.08);scene.add(lake);worldObjects.push(lake);
-}
-function addSmoke(isl){
- if(!['Luzon','Mindanao'].includes(isl.name))return;
- const g=new THREE.Group();
- for(let i=0;i<5;i++){
-  const p=new THREE.Mesh(new THREE.SphereGeometry(.42+i*.08,10,8),
-   new THREE.MeshStandardMaterial({color:0x66706b,transparent:true,opacity:.42,roughness:1}));
-  p.position.set((hash(i,isl.seed,190)-.5)*.45,i*.65, (hash(i,isl.seed,191)-.5)*.35);
-  g.add(p);
- }
- g.position.set(isl.x+isl.w*.12,3.7,isl.z-isl.d*.08);scene.add(g);worldObjects.push(g);
- animated.push({type:'smoke',object:g,phase:hash(isl.x,isl.z,192)*6.28});
-}
-function addFishGrounds(isl){
- const count=Math.max(2,Math.floor(isl.w/3));
- const p=pts(isl,1.12);
- for(let i=0;i<count;i++){
-  const idx=(i*5+Math.floor(isl.seed))%p.length;
-  const edge=p[idx];
-  const inward=new THREE.Vector2(isl.x-edge.x,isl.z-edge.y).normalize();
-  const x=edge.x+inward.x*(.55+hash(i,isl.seed,150)*.5);
-  const z=edge.y+inward.y*(.55+hash(i,isl.seed,151)*.5);
-  const ground=new THREE.Mesh(
-   new THREE.RingGeometry(.45,.9,18),
-   new THREE.MeshBasicMaterial({color:0x8bd8d8,transparent:true,opacity:.18,side:THREE.DoubleSide})
-  );
-  ground.rotation.x=-Math.PI/2;ground.position.set(x,-.57,z);scene.add(ground);worldObjects.push(ground);
-  const fishGroup=new THREE.Group();
-  for(let f=0;f<3;f++){
-   const fish=new THREE.Mesh(
-    new THREE.ConeGeometry(.09,.34,6),
-    new THREE.MeshStandardMaterial({color:0xe4c96a,roughness:.65})
-   );
-   fish.rotation.z=Math.PI/2;fish.position.set((f-1)*.34,.05,Math.sin(f)*.18);
-   fishGroup.add(fish);
+
+  // Tile-biome variation, intentionally hard-edged.
+  islands.forEach(i=>{
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      const k=idx(x,y);
+      if(owner[k]!==i.clan || terrain[k]===0 || terrain[k]===1 || terrain[k]===2)continue;
+      const h=hash(x,y,i.seed);
+      if(h>.74){terrain[k]=5;forestTiles.push([x,y])}
+      else if(h>.64){terrain[k]=4;riceTiles.push([x,y])}
+    }
+  });
+
+  // Mountain bands.
+  const mountainCenters=[
+    [127,53,8,11],[134,91,7,8],[74,164,5,10],[174,109,5,9],
+    [152,224,10,15],[203,220,8,10],[215,245,8,8]
+  ];
+  mountainCenters.forEach((c,ci)=>{
+    const [cx,cy,rx,ry]=c;
+    for(let y=cy-ry;y<=cy+ry;y++)for(let x=cx-rx;x<=cx+rx;x++){
+      if(!inMap(x,y)||!isLandCode(terrain[idx(x,y)]))continue;
+      const d=((x-cx)*(x-cx))/(rx*rx)+((y-cy)*(y-cy))/(ry*ry);
+      if(d<.76 && hash(x,y,90+ci)>.26){terrain[idx(x,y)]=6;mountainTiles.push([x,y])}
+      if(d<.28 && hash(x,y,120+ci)>.44)terrain[idx(x,y)]=7;
+    }
+  });
+
+  // Rivers run from mountain areas toward the sea.
+  const riverPaths=[
+    [[128,48],[124,62],[126,76],[121,91],[117,107]],
+    [[151,203],[157,216],[164,231],[174,246],[182,262]],
+    [[203,205],[197,217],[192,231],[188,247],[178,264]]
+  ];
+  riverPaths.forEach(p=>{lineTiles(p,8);rivers.push(p)});
+
+  // Pixel roads.
+  const roadPaths=[
+    [[108,80],[123,86],[139,84],[151,91]],
+    [[139,148],[151,157],[165,160],[179,157]],
+    [[159,218],[176,222],[194,228],[217,226]]
+  ];
+  roadPaths.forEach(p=>{lineTiles(p,9);roads.push(p)});
+
+  // Resource fields and fishing grounds.
+  const fixedGold=[[124,49],[132,56],[147,73],[151,208],[157,220],[203,218],[214,240]];
+  fixedGold.forEach(p=>{const q=nearestLand(p[0],p[1]);goldTiles.push(q)});
+  const fixedFish=[[74,210],[171,88],[207,150],[252,210],[115,178],[246,282]];
+  fixedFish.forEach(p=>fishTiles.push(p));
+
+  // Volcanoes on selected mountain tiles.
+  [[132,55],[202,221]].forEach(p=>{const q=nearestLand(p[0],p[1]);volcanoes.push({x:q[0],y:q[1],pulse:Math.random()*6.28})});
+
+  // Villages / town centers.
+  const villageSeeds=[
+    [0,120,76],[0,136,101],[0,84,61],[1,145,149],[1,181,117],[1,176,162],
+    [2,170,235],[2,205,224],[2,201,250]
+  ];
+  villageSeeds.forEach((v,vi)=>{
+    const q=nearestLand(v[1],v[2]);
+    villages.push({x:q[0],y:q[1],clan:v[0],name:v[0]===0?'Luzon Town':v[0]===1?'Visayas Town':'Mindanao Town',id:vi,pop:40+Math.floor(hash(vi,v[0],4)*90)});
+  });
+
+  // Tiny living units.
+  for(let c=0;c<3;c++){
+    const owned=islands.filter(i=>i.clan===c);
+    for(let j=0;j<12;j++){
+      const isl=owned[j%owned.length];
+      const minX=Math.min(...isl.poly.map(p=>p[0])),maxX=Math.max(...isl.poly.map(p=>p[0]));
+      const minY=Math.min(...isl.poly.map(p=>p[1])),maxY=Math.max(...isl.poly.map(p=>p[1]));
+      let q=[0,0];
+      for(let tries=0;tries<40;tries++){
+        const x=Math.floor(minX+hash(j,tries,100+c)*Math.max(1,maxX-minX));
+        const y=Math.floor(minY+hash(j,tries,160+c)*Math.max(1,maxY-minY));
+        if(inMap(x,y)&&owner[idx(x,y)]===c&&isLandCode(terrain[idx(x,y)])){q=[x,y];break}
+      }
+      units.push({x:q[0],y:q[1],tx:q[0],ty:q[1],clan:c,phase:hash(j,c,3)*6.28,step:0});
+    }
   }
-  fishGroup.position.set(x,-.35,z);scene.add(fishGroup);worldObjects.push(fishGroup);
-  animated.push({type:'fish',object:fishGroup,phase:hash(i,isl.seed,152)*6.28,baseX:x,baseZ:z});
- }
+  rebuildLayer();
+  drawMini();
+  updateUI();
 }
-function addPixelTiles(isl){
- const p=pts(isl,.82);
- const minX=Math.floor(isl.x-isl.w*.42),maxX=Math.ceil(isl.x+isl.w*.42);
- const minZ=Math.floor(isl.z-isl.d*.42),maxZ=Math.ceil(isl.z+isl.d*.42);
- for(let x=minX;x<=maxX;x+=.5){
-  for(let z=minZ;z<=maxZ;z+=.5){
-   const inside=Math.pow((x-isl.x)/(isl.w*.46),2)+Math.pow((z-isl.z)/(isl.d*.46),2)<.78;
-   if(!inside)continue;
-   if(hash(x,z,isl.seed)>0.84){
-    const tile=new THREE.Mesh(new THREE.PlaneGeometry(.46,.46),new THREE.MeshBasicMaterial({color:hash(x,z,77)>.5?0x78aa50:0x6fa047}));
-    tile.rotation.x=-Math.PI/2;tile.position.set(x,.205,z);scene.add(tile);worldObjects.push(tile);
-   }
+
+function drawTile(x,y,c){
+  const color=
+    c===0?ocean:
+    c===1?shallow:
+    c===2?beach:
+    c===3?grass:
+    c===4?rice:
+    c===5?forest:
+    c===6?mountain:
+    c===7?snow:
+    c===8?river:
+    c===9?road:grass;
+  lctx.fillStyle=color;lctx.fillRect(x,y,1,1);
+
+  // tiny original pixel flecks; no smooth gradients/shadows.
+  if(c===5 && hash(x,y,777)>.64){
+    lctx.fillStyle='#24472d';lctx.fillRect(x,y,1,1);
   }
- }
-}
-function addRoad(isl){
- const group=new THREE.Group();
- const mat=new THREE.MeshStandardMaterial({color:0x7b6341,roughness:1});
- const points=[
-  [isl.x-isl.w*.34,isl.z-isl.d*.28],[isl.x-isl.w*.08,isl.z-.02],
-  [isl.x+isl.w*.26,isl.z+isl.d*.22]
- ];
- const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],.48,p[1])));
- const geo=new THREE.TubeGeometry(curve,12,.10,5,false);
- const road=new THREE.Mesh(geo,mat);
- group.add(road);scene.add(group);worldObjects.push(group);
-}
-function addTree(x,z,s=1,kind=0){
- const g=new THREE.Group();
- const trunk=new THREE.Mesh(new THREE.BoxGeometry(.14*s,.48*s,.14*s),new THREE.MeshStandardMaterial({color:0x65462c,roughness:1}));
- trunk.position.y=.62*s;
- const leafMat=new THREE.MeshStandardMaterial({color:kind?0x2f7042:0x3f824b,roughness:1});
- const a=new THREE.Mesh(new THREE.ConeGeometry(.48*s,.92*s,6),leafMat);a.position.y=1.12*s;
- const b=new THREE.Mesh(new THREE.ConeGeometry(.34*s,.72*s,6),leafMat);b.position.y=1.55*s;
- g.add(trunk,a,b);g.position.set(x,0,z);g.rotation.y=hash(x,z,3)*Math.PI;
- g.castShadow=true;scene.add(g);worldObjects.push(g);animated.push({type:'tree',object:g,phase:hash(x,z,91)*6.28,amp:.025+hash(x,z,92)*.025});return g;
-}
-function addMountain(x,z,h,s=1){
- const g=new THREE.Group();
- const dark=new THREE.MeshBasicMaterial({color:0x77736b});
- const rock=new THREE.Mesh(new THREE.ConeGeometry(1.25*s,h,8),dark);
- rock.scale.z=.82;rock.position.y=h/2;
- const shoulder=new THREE.Mesh(new THREE.ConeGeometry(1.75*s,h*.42,8),dark);
- shoulder.scale.z=.72;shoulder.position.y=h*.25;
- const snow=new THREE.Mesh(new THREE.ConeGeometry(.48*s,h*.32,8),new THREE.MeshBasicMaterial({color:0xe8e8df}));
- snow.position.y=h*.78;
- g.add(shoulder,rock,snow);g.position.set(x,0,z);g.rotation.y=hash(x,z,7)*6.28;g.castShadow=true;scene.add(g);worldObjects.push(g);
-}
-function addHouse(x,z,clan,scale=1){
- const g=new THREE.Group();
- const body=new THREE.Mesh(new THREE.BoxGeometry(.72*scale,.56*scale,.72*scale),new THREE.MeshStandardMaterial({color:0xd4bb7b,roughness:.9}));
- const roof=new THREE.Mesh(new THREE.ConeGeometry(.62*scale,.56*scale,4),new THREE.MeshStandardMaterial({color:0x794a37,roughness:1}));
- roof.rotation.y=Math.PI/4;roof.position.y=.56*scale;
- const flag=new THREE.Mesh(new THREE.PlaneGeometry(.42*scale,.25*scale),new THREE.MeshBasicMaterial({color:accents[clan],side:THREE.DoubleSide}));
- flag.position.set(.34*scale,.94*scale,0);flag.rotation.y=Math.PI/2;
- g.add(body,roof,flag);g.position.set(x,.55,z);g.castShadow=true;scene.add(g);worldObjects.push(g);villages.push(g);return g;
-}
-function addTown(isl){
- const g=new THREE.Group();
- const base=new THREE.Mesh(new THREE.CylinderGeometry(1.05,1.18,.24,8),new THREE.MeshStandardMaterial({color:0x9b7d4b,roughness:1}));
- base.position.y=.48;
- const hall=new THREE.Mesh(new THREE.BoxGeometry(1.05,.9,.8),new THREE.MeshStandardMaterial({color:0xe0c988,roughness:.85}));
- hall.position.y=.98;
- const roof=new THREE.Mesh(new THREE.ConeGeometry(.86,.75,4),new THREE.MeshStandardMaterial({color:colors[isl.clan],roughness:1}));
- roof.rotation.y=Math.PI/4;roof.position.y=1.72;
- const pole=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,1.3,5),new THREE.MeshStandardMaterial({color:0x503b28}));
- pole.position.set(.75,1.7,0);
- const flag=new THREE.Mesh(new THREE.PlaneGeometry(.52,.3),new THREE.MeshBasicMaterial({color:accents[isl.clan],side:THREE.DoubleSide}));
- flag.position.set(.94,2.18,0);flag.rotation.y=Math.PI/2;
- g.add(base,hall,roof,pole,flag);g.position.set(isl.x,0,isl.z);g.castShadow=true;scene.add(g);worldObjects.push(g);
-}
-function addVolcano(isl){
- if(isl.name!=='Mindanao' && isl.name!=='Luzon')return;
- const h=isl.name==='Mindanao'?4.6:3.4;
- const g=new THREE.Group();
- const cone=new THREE.Mesh(new THREE.ConeGeometry(1.65,h,14),new THREE.MeshStandardMaterial({color:0x4d5146,roughness:1}));
- cone.position.y=h/2;
- const crater=new THREE.Mesh(new THREE.CylinderGeometry(.62,.82,.24,16),new THREE.MeshStandardMaterial({color:0x1d201b,roughness:1}));
- crater.position.y=h+.03;
- const lava=new THREE.Mesh(new THREE.TorusGeometry(.54,.075,8,24),new THREE.MeshBasicMaterial({color:0xff6b1a}));
- lava.rotation.x=Math.PI/2;lava.position.y=h+.12;
- g.add(cone,crater,lava);g.position.set(isl.x+isl.w*.12,0,isl.z-isl.d*.08);g.castShadow=true;scene.add(g);worldObjects.push(g);
-}
-function addIsland(isl){
- ringTerrain(isl,1,0,0x4f914b,.08);
- ringTerrain(isl,.90,.08,0x72aa50,.06);
- ringTerrain(isl,.72,.13,0x86b85b,.04);
- const beach=pts(isl,.96);
- const coast=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(beach.map(p=>new THREE.Vector3(p.x,1.43,p.y))),new THREE.LineBasicMaterial({color:0xe8d59a,linewidth:2}));
- scene.add(coast);worldObjects.push(coast);
- addRoad(isl);
- addPixelTiles(isl);
- addTown(isl);
- addVolcano(isl);
- addGold(isl);
- addWoodland(isl);
- addFarmland(isl);
- addFishGrounds(isl);
- addLake(isl);
- addRiver(isl,isl.name==='Mindanao'?.9:0);
- addSmoke(isl);
- const mCount=Math.max(2,Math.floor(isl.w/3));
- for(let i=0;i<mCount;i++){
-  const x=isl.x+(hash(i,isl.seed,30)-.5)*isl.w*.52;
-  const z=isl.z+(hash(i,isl.seed,31)-.5)*isl.d*.48;
-  addMountain(x,z,1.4+hash(i,isl.seed,32)*2.8,.8+hash(i,isl.seed,33)*.55);
- }
- const treeCount=Math.floor(isl.w*2.2);
- for(let i=0;i<treeCount;i++){
-  const x=isl.x+(hash(i,isl.seed,40)-.5)*isl.w*.72;
-  const z=isl.z+(hash(i,isl.seed,41)-.5)*isl.d*.66;
-  addTree(x,z,.72+hash(i,isl.seed,42)*.55,i%3===0?1:0);
- }
- for(let i=0;i<Math.max(2,Math.floor(isl.w/2.6));i++){
-  const x=isl.x+(hash(i,isl.seed,50)-.5)*isl.w*.55;
-  const z=isl.z+(hash(i,isl.seed,51)-.5)*isl.d*.48;
-  addHouse(x,z,isl.clan,.8+hash(i,isl.seed,52)*.25);
- }
- const label=document.createElement('canvas');label.width=512;label.height=100;
- const ctx=label.getContext('2d');ctx.font='900 38px system-ui';ctx.textAlign='center';
- ctx.fillStyle='#102016';ctx.strokeStyle='#eef6dc';ctx.lineWidth=7;ctx.strokeText(isl.name.toUpperCase(),256,58);ctx.fillText(isl.name.toUpperCase(),256,58);
- const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true,depthTest:false,sizeAttenuation:false}));
- sprite.scale.set(.12,.035,1);sprite.position.set(isl.x,.5,isl.z);scene.add(sprite);worldObjects.push(sprite);
-}
-function addCloud(x,y,z,s=1){
- const g=new THREE.Group();
- const mat=new THREE.MeshStandardMaterial({color:0xf0f4e7,transparent:true,opacity:.72,roughness:1});
- for(let i=0;i<4;i++){
-  const puff=new THREE.Mesh(new THREE.SphereGeometry((1.2+hash(i,x,z))*s,12,8),mat);
-  puff.position.set((i-1.5)*1.15*s,hash(i,z,x)*.45*s,Math.sin(i*2.1)*.55*s);
-  g.add(puff);
- }
- g.position.set(x,y,z);scene.add(g);worldObjects.push(g);
- animated.push({type:'cloud',object:g,phase:hash(x,z,101)*6.28,speed:.004+hash(x,z,102)*.003});
-}
-function addWaterWave(x,z,s=1){
- const w=new THREE.Mesh(
-  new THREE.RingGeometry(.35*s,.58*s,16),
-  new THREE.MeshBasicMaterial({color:0xc5edf0,transparent:true,opacity:.16,side:THREE.DoubleSide})
- );
- w.rotation.x=-Math.PI/2;w.position.set(x,-.64,z);scene.add(w);worldObjects.push(w);
- animated.push({type:'wave',object:w,phase:hash(x,z,103)*6.28});
-}
-function addBird(x,y,z){
- const g=new THREE.Group();
- const mat=new THREE.LineBasicMaterial({color:0x253b2b,transparent:true,opacity:.8});
- const pts=[new THREE.Vector3(-.28,0,0),new THREE.Vector3(0,.12,0),new THREE.Vector3(.28,0,0)];
- const wing=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
- g.add(wing);g.position.set(x,y,z);scene.add(g);worldObjects.push(g);
- animated.push({type:'bird',object:g,phase:hash(x,z,104)*6.28,speed:.018+hash(x,z,105)*.012});
-}
-function clearWorld(){
- worldObjects.forEach(o=>scene.remove(o));
- worldObjects=[];units=[];villages=[];animated=[];
- if(disaster){scene.remove(disaster.group);disaster=null}
-}
-function spawn(){
- clearWorld();
- const sea=new THREE.Mesh(new THREE.CylinderGeometry(53,53,.7,96),new THREE.MeshStandardMaterial({color:0x4c91a1,roughness:.7,metalness:.02}));
- sea.position.y=-1.05;sea.receiveShadow=true;scene.add(sea);worldObjects.push(sea);
- for(let i=0;i<70;i++){
-  const a=i/70*Math.PI*2,r=38+hash(i,2,4)*12;
-  const foam=new THREE.Mesh(new THREE.RingGeometry(.25,.55,8),new THREE.MeshBasicMaterial({color:0xa9d4cf,transparent:true,opacity:.25,side:THREE.DoubleSide}));
-  foam.rotation.x=-Math.PI/2;foam.position.set(Math.cos(a)*r,-.66,Math.sin(a)*r);scene.add(foam);worldObjects.push(foam);
-  animated.push({type:'foam',object:foam,phase:hash(i,4,106)*6.28});
- }
- for(let i=0;i<28;i++){
-  const a=hash(i,5,107)*Math.PI*2,r=8+hash(i,6,108)*42;
-  addWaterWave(Math.cos(a)*r,Math.sin(a)*r,.55+hash(i,7,109)*.7);
- }
- for(let i=0;i<5;i++)addCloud(-28+i*15,12+hash(i,8,110)*5,-8+hash(i,9,111)*18,1.3+hash(i,10,112)*.8);
- for(let i=0;i<8;i++)addBird(-25+hash(i,11,113)*48,7+hash(i,12,114)*8,-15+hash(i,13,115)*35);
- islands.forEach(addIsland);
- islands.forEach((isl,ii)=>{
-  for(let j=0;j<5;j++){
-   const g=new THREE.Group();
-   const body=new THREE.Mesh(new THREE.BoxGeometry(.18,.08,.18),new THREE.MeshBasicMaterial({color:colors[isl.clan]}));
-   const head=new THREE.Mesh(new THREE.BoxGeometry(.08,.05,.08),new THREE.MeshBasicMaterial({color:0xffc98f}));
-   head.position.y=.28;
-   g.add(body,head);
-   g.position.set(Math.round((isl.x+(hash(j,isl.seed,60)-.5)*isl.w*.4)*2)/2,.32,Math.round((isl.z+(hash(j,isl.seed,61)-.5)*isl.d*.38)*2)/2);
-   g.userData={island:ii,clan:isl.clan,tx:g.position.x,tz:g.position.z,phase:hash(j,ii,70)*6.28};
-   scene.add(g);worldObjects.push(g);units.push(g);
+  if(c===4 && hash(x,y,778)>.55){
+    lctx.fillStyle='#c6db83';lctx.fillRect(x,y,1,1);
   }
- });
+  if(c===6 && hash(x,y,779)>.58){
+    lctx.fillStyle='#5f5d58';lctx.fillRect(x,y,1,1);
+  }
+  if(c===7 && hash(x,y,780)>.28){
+    lctx.fillStyle=snow;lctx.fillRect(x,y,1,1);
+  }
 }
-function log(t){
- const e=document.createElement('div');e.className='event';e.textContent=t;
- document.getElementById('events').prepend(e);
- while(document.getElementById('events').children.length>18)document.getElementById('events').lastChild.remove();
+function rebuildLayer(){
+  lctx.fillStyle=ocean;lctx.fillRect(0,0,W,H);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)drawTile(x,y,terrain[idx(x,y)]);
+
+  // Reefs around selected shallow-water areas.
+  fishTiles.forEach(([x,y])=>{
+    lctx.fillStyle=reef;lctx.fillRect(x-1,y,1,1);lctx.fillRect(x+1,y,1,1);
+    lctx.fillRect(x,y-1,1,1);lctx.fillRect(x,y+1,1,1);
+  });
+
+  // Road line on top of land.
+  roads.forEach(path=>{for(let i=0;i<path.length-1;i++)drawPixelLine(path[i],path[i+1],road)});
 }
-function alertWorld(t){
- const a=document.getElementById('alert');a.textContent=t;a.classList.add('show');
- clearTimeout(alertWorld.timer);alertWorld.timer=setTimeout(()=>a.classList.remove('show'),3000);
+function drawPixelLine(a,b,color){
+  let x0=Math.round(a[0]),y0=Math.round(a[1]),x1=Math.round(b[0]),y1=Math.round(b[1]);
+  const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;
+  let err=dx-dy;
+  while(true){
+    if(inMap(x0,y0)&&terrain[idx(x0,y0)]>=2){lctx.fillStyle=color;lctx.fillRect(x0,y0,1,1)}
+    if(x0===x1&&y0===y1)break;
+    const e2=2*err;
+    if(e2>-dy){err-=dy;x0+=sx}
+    if(e2<dx){err+=dx;y0+=sy}
+  }
 }
-function updateTopUI(){
- document.getElementById('goldUI').textContent=(2450+clans.reduce((a,c)=>a+c.points,0)).toLocaleString();
- document.getElementById('woodUI').textContent=(5320+clans.reduce((a,c)=>a+c.villages*8,0)).toLocaleString();
- document.getElementById('foodUI').textContent=(8760+clans.reduce((a,c)=>a+c.members*2,0)).toLocaleString();
- document.getElementById('fishUI').textContent=(4210+clans.reduce((a,c)=>a+c.members,0)).toLocaleString();
- document.getElementById('popUI').textContent=(12540+clans.reduce((a,c)=>a+c.members,0)).toLocaleString();
+
+function fit(){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  mapCanvas.width=Math.floor(innerWidth*dpr);
+  mapCanvas.height=Math.floor(innerHeight*dpr);
+  mapCanvas.style.width=innerWidth+'px';mapCanvas.style.height=innerHeight+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.imageSmoothingEnabled=false;
+  drawFrame(performance.now());
 }
-function render(){
- updateTopUI();
- clans.forEach((c,i)=>c.territory=islands.filter(x=>x.clan===i).length);
- document.getElementById('viewers').textContent=viewers.toLocaleString();
- document.getElementById('cards').innerHTML=clans.map((c,i)=>`
- <article class="clan">
-  <div class="clanHead"><span>${emojis[i]} ${c.name}</span><span class="badge">${c.territory} ISLANDS</span></div>
-  <div class="meter"><div class="fill" style="width:${c.members/4}%"></div></div>
-  <div class="stats">👥 ${c.members}/400 · 💎 ${c.points.toLocaleString()} contribution<br>👑 <span class="leader">${c.leader}</span> · 🏘️ ${c.villages} villages</div>
- </article>`).join('');
+function worldScale(){return Math.max(1,Math.min(innerWidth,innerHeight)/320)*camera.zoom}
+function screenToWorld(sx,sy){
+  const s=worldScale();
+  return [camera.x+(sx-innerWidth/2)/s,camera.y+(sy-innerHeight/2)/s];
+}
+function clampCamera(){
+  const halfW=innerWidth/(2*worldScale()),halfH=innerHeight/(2*worldScale());
+  camera.x=clamp(camera.x,halfW,320-halfW);
+  camera.y=clamp(camera.y,halfH,320-halfH);
+}
+function drawFrame(now){
+  const t=now*.001;
+  let ox=0,oy=0;
+  if(shake>0){ox=(Math.random()-.5)*shake;oy=(Math.random()-.5)*shake}
+  ctx.save();
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  ctx.translate(ox,oy);
+  const s=worldScale();
+  clampCamera();
+  ctx.translate(innerWidth/2,innerHeight/2);
+  ctx.scale(s,s);
+  ctx.translate(-camera.x,-camera.y);
+
+  ctx.drawImage(layer,0,0);
+
+  // Gold glints.
+  goldTiles.forEach((p,i)=>{
+    const glow=(Math.sin(t*5+p[0]+p[1])+1)/2;
+    if(glow>.55){
+      ctx.fillStyle='#ffe14c';
+      ctx.fillRect(p[0],p[1],1,1);
+      if(glow>.82){ctx.fillStyle='#fff7a8';ctx.fillRect(p[0]+1,p[1],1,1)}
+    }
+  });
+
+  // Fish movement in shallow water.
+  fishTiles.forEach((p,i)=>{
+    const dx=Math.round(Math.sin(t*1.8+i)*1.4),dy=Math.round(Math.cos(t*1.4+i)*1);
+    ctx.fillStyle='#e9f7d8';
+    ctx.fillRect(p[0]+dx,p[1]+dy,1,1);
+    ctx.fillStyle='#1a6173';
+    ctx.fillRect(p[0]+dx-1,p[1]+dy,1,1);
+  });
+
+  // Village pixels.
+  villages.forEach(v=>{
+    ctx.fillStyle='#6d492e';ctx.fillRect(v.x-1,v.y,3,2);
+    ctx.fillStyle='#d8c38e';ctx.fillRect(v.x,v.y-1,1,2);
+    ctx.fillStyle=unitColors[v.clan];ctx.fillRect(v.x+1,v.y-1,1,1);
+  });
+
+  // Animated smoke over volcanoes.
+  volcanoes.forEach((v,i)=>{
+    const bob=Math.floor(Math.sin(t*.9+i)*2);
+    ctx.fillStyle='#707a72';ctx.fillRect(v.x,v.y-3+bob,2,2);
+    ctx.fillStyle='#46504c';ctx.fillRect(v.x+1,v.y-5+bob,2,2);
+    const pulse=(Math.sin(t*4+v.pulse)+1)/2;
+    ctx.fillStyle=pulse>.55?lava:'#d94d1c';ctx.fillRect(v.x,v.y,1,1);
+  });
+
+  // Units — 2×2 pixel bodies, color coded.
+  units.forEach(u=>{
+    u.step+=.02;
+    const bob=Math.sin(t*4+u.phase)*.22;
+    ctx.fillStyle=unitColors[u.clan];
+    ctx.fillRect(Math.round(u.x),Math.round(u.y+bob),2,2);
+    ctx.fillStyle='#f6c9a0';ctx.fillRect(Math.round(u.x+1),Math.round(u.y-1+bob),1,1);
+  });
+
+  // Event/disaster overlays stay pixel-sharp.
+  if(disaster){
+    if(disaster.type==='Earthquake'){
+      ctx.fillStyle='#eec25d';
+      for(let i=0;i<14;i++){
+        const x=Math.floor(disaster.x+Math.sin(i)*6),y=Math.floor(disaster.y+Math.cos(i*1.7)*6);
+        ctx.fillRect(x,y,1,1);
+      }
+    }
+    if(disaster.type==='Typhoon'){
+      ctx.fillStyle='#9bcbd0';
+      for(let i=0;i<26;i++){
+        const a=i*.52+t*.8,r=4+i*.55;
+        ctx.fillRect(Math.round(disaster.x+Math.cos(a)*r),Math.round(disaster.y+Math.sin(a)*r),2,1);
+      }
+    }
+    if(disaster.type==='Tsunami'){
+      ctx.fillStyle='#b9f0f4';
+      const y=Math.round(disaster.y+Math.sin(t*4)*2);
+      for(let x=Math.floor(disaster.x-22);x<disaster.x+23;x+=3)ctx.fillRect(x,y+(x%5),2,2);
+    }
+    if(disaster.type==='Volcano'){
+      ctx.fillStyle=lava;
+    }
+    if(disaster.type==='Wildfire'){
+      ctx.fillStyle='#ff8b25';
+      for(let i=0;i<22;i++){
+        const x=Math.round(disaster.x+Math.sin(i*2.1+t*5)*5),y=Math.round(disaster.y+Math.cos(i*1.3+t*4)*5);
+        ctx.fillRect(x,y,1,1);
+      }
+    }
+  }
+
+  const light=Math.max(0,Math.sin((day-6)/12*Math.PI));
+  const night=1-light;
+  if(night>.08){
+    ctx.fillStyle='rgba(7,17,28,'+(0.10+night*.34)+')';
+    ctx.fillRect(0,0,320,320);
+    // tiny settlement lights at night.
+    if(night>.58){
+      villages.forEach(v=>{ctx.fillStyle='#ffd66a';ctx.fillRect(v.x,v.y-1,1,1)})
+    }
+  }
+  ctx.restore();
+
+  if(disaster&&disaster.type==='Volcano'){
+    ctx.save();
+    ctx.fillStyle='rgba(242,99,36,.08)';
+    ctx.fillRect(0,0,innerWidth,innerHeight);
+    ctx.restore();
+  }
+}
+function drawMini(){
+  const w=mini.clientWidth||132,h=mini.clientHeight||132,dpr=Math.min(2,devicePixelRatio||1);
+  mini.width=Math.floor(w*dpr);mini.height=Math.floor(h*dpr);
+  mctx.setTransform(dpr,0,0,dpr,0,0);
+  mctx.imageSmoothingEnabled=false;
+  mctx.clearRect(0,0,w,h);
+  mctx.fillStyle='#0a3a4a';mctx.fillRect(0,0,w,h);
+  mctx.drawImage(layer,0,0,320,320,0,0,w,h);
+  mctx.strokeStyle='#bce6c1';mctx.strokeRect(0,0,w,h);
+}
+
+function updateUI(){
+  const totalMembers=clans.reduce((a,c)=>a+c.members,0);
+  document.getElementById('goldUI').textContent=(2450+clans.reduce((a,c)=>a+c.points,0)).toLocaleString();
+  document.getElementById('woodUI').textContent=(5320+clans.reduce((a,c)=>a+c.villages*8,0)).toLocaleString();
+  document.getElementById('foodUI').textContent=(8760+totalMembers*2).toLocaleString();
+  document.getElementById('fishUI').textContent=(4210+totalMembers).toLocaleString();
+  document.getElementById('popUI').textContent=(12540+totalMembers).toLocaleString();
+  document.getElementById('viewers').textContent=viewers.toLocaleString();
+  document.getElementById('dayUI').textContent=(lightLabel(day)+ ' 124 · '+String(Math.floor(day)).padStart(2,'0')+':'+String(Math.floor(day%1*60)).padStart(2,'0'));
+  clans.forEach((c,i)=>{
+    c.territory=islands.filter(x=>x.clan===i).length;
+    if(c.points>0)c.leader='Top Contributor';
+  });
+  document.getElementById('cards').innerHTML=clans.map((c,i)=>
+    '<article class="clan"><div class="clanHead"><span>'+clanEmojis[i]+' '+c.name+'</span><span class="badge">'+c.territory+' ISLANDS</span></div>'+
+    '<div class="meter"><div class="fill" style="width:'+Math.min(100,c.members/4)+'%"></div></div>'+
+    '<div class="stats">👥 '+c.members+'/400 · 💎 '+c.points.toLocaleString()+' contribution<br>👑 <span class="leader">'+c.leader+'</span> · 🏘️ '+c.villages+' villages</div></article>'
+  ).join('');
+}
+function lightLabel(v){return Math.sin((v-6)/12*Math.PI)>.35?'☀ DAY':'🌙 NIGHT'}
+
+function log(msg){
+  const e=document.createElement('div');e.className='event';e.textContent=msg;
+  const list=document.getElementById('events');list.prepend(e);
+  while(list.children.length>18)list.lastChild.remove();
+}
+function alertWorld(msg){
+  const a=document.getElementById('alert');a.textContent=msg;a.classList.add('show');
+  clearTimeout(alertWorld.t);alertWorld.t=setTimeout(()=>a.classList.remove('show'),2300);
 }
 function gift(n){
- const i=+document.getElementById('clan').value,c=clans[i],old=c.members;
- c.members=Math.min(400,c.members+n);
- const added=c.members-old;
- c.points+=n*10;
- c.villages=Math.min(99,c.villages+Math.floor(n/25));
- if(c.points>0)c.leader='Top Contributor';
- log(`🎁 ${c.name} received +${added} members and +${n*10} contribution.`);
- alertWorld(`🎁 ${c.name.toUpperCase()} +${added} MEMBERS`);
- render();
+  const i=+document.getElementById('clan').value,c=clans[i],old=c.members;
+  c.members=Math.min(400,c.members+n);
+  const added=c.members-old;
+  c.points+=n*10;
+  c.villages=Math.min(99,c.villages+Math.floor(n/25));
+  c.leader='Top Contributor';
+  log('🎁 '+c.name+' received +'+added+' members and +'+(n*10)+' contribution.');
+  alertWorld('🎁 '+c.name.toUpperCase()+' +'+added);
+  updateUI();
 }
-function createDisaster(type){
- if(disaster)scene.remove(disaster.group);
- const group=new THREE.Group();disaster={type,group,life:0};
- if(type==='Earthquake'){
-  const ring=new THREE.Mesh(new THREE.RingGeometry(.6,2.4,48),new THREE.MeshBasicMaterial({color:0xffd166,transparent:true,opacity:.9,side:THREE.DoubleSide}));
-  ring.rotation.x=-Math.PI/2;ring.position.y=1.5;group.add(ring);
- }else if(type==='Typhoon'){
-  const cloud=new THREE.Mesh(new THREE.TorusGeometry(4,.7,10,48),new THREE.MeshStandardMaterial({color:0x59666c,transparent:true,opacity:.8}));
-  cloud.rotation.x=Math.PI/2;cloud.position.y=11;group.add(cloud);
- }else if(type==='Tsunami'){
-  const wave=new THREE.Mesh(new THREE.TorusGeometry(3.5,.5,10,64),new THREE.MeshBasicMaterial({color:0xb7eff5,transparent:true,opacity:.85,side:THREE.DoubleSide}));
-  wave.rotation.x=Math.PI/2;wave.position.y=.2;group.add(wave);
- }else if(type==='Volcano'){
-  const smoke=new THREE.Mesh(new THREE.SphereGeometry(1.7,14,10),new THREE.MeshStandardMaterial({color:0x363a37,transparent:true,opacity:.75}));
-  smoke.position.set(12,8,10);group.add(smoke);
-  const fire=new THREE.PointLight(0xff651e,10,18);fire.position.set(12,3,10);group.add(fire);
- }else{
-  const fire=new THREE.Mesh(new THREE.ConeGeometry(1.8,.9,8),new THREE.MeshBasicMaterial({color:0xff681d,transparent:true,opacity:.85}));
-  fire.position.set(-8,2,-7);group.add(fire);
- }
- scene.add(group);
+function randomEvent(){
+  const i=Math.floor(Math.random()*3);
+  const choices=['opened a sea trade route','discovered fertile land','sent explorers across the islands','expanded a settlement','started a border conflict'];
+  const msg=clanEmojis[i]+' '+names[i]+' '+choices[Math.floor(Math.random()*choices.length)]+'.';
+  log(msg);alertWorld(msg);
 }
-function triggerDisaster(){
- const types=['Earthquake','Typhoon','Tsunami','Volcano','Wildfire'];
- const labels=['🌎 EARTHQUAKE','🌀 TYPHOON','🌊 TSUNAMI','🌋 VOLCANIC ERUPTION','🔥 WILDFIRE'];
- const i=Math.floor(Math.random()*types.length);
- createDisaster(types[i]);log(labels[i]+' has struck the world!');alertWorld(labels[i]+'!');
- document.getElementById('status').textContent='⚠️ Disaster: '+types[i];
- setTimeout(()=>{if(disaster){scene.remove(disaster.group);disaster=null;document.getElementById('status').textContent=running?'World is evolving…':'World paused.'}},7000);
+function createDisaster(){
+  const types=['Earthquake','Typhoon','Tsunami','Volcano','Wildfire'];
+  const labels=['🌎 EARTHQUAKE','🌀 TYPHOON','🌊 TSUNAMI','🌋 VOLCANIC ERUPTION','🔥 WILDFIRE'];
+  const i=Math.floor(Math.random()*types.length),t=types[i];
+  let p;
+  if(t==='Typhoon'||t==='Tsunami')p=[178,180];
+  else if(t==='Volcano')p=[202,221];
+  else if(t==='Wildfire')p=[125,76];
+  else p=[160,165];
+  disaster={type:t,x:p[0],y:p[1],life:0};
+  shake= t==='Earthquake'?5:2;
+  log(labels[i]+' has struck the world!');
+  alertWorld(labels[i]+'!');
+  document.getElementById('status').textContent='⚠ Disaster: '+t;
+  setTimeout(()=>{
+    if(disaster&&disaster.type===t){disaster=null;document.getElementById('status').textContent=running?'World is evolving…':'World paused.'}
+  },6500);
+}
+function resetWorld(){
+  clearInterval(timer);running=false;timer=null;
+  document.getElementById('start').textContent='▶ Start';
+  document.getElementById('status').textContent='World paused.';
+  document.getElementById('events').innerHTML='';
+  viewers=1284;day=12.5;camera={x:160,y:160,zoom:1};disaster=null;shake=0;
+  initWorld();log('🌏 320×320 LARGE tile world loaded.');alertWorld('🌏 WORLD RESET');
 }
 function tick(){
- viewers=Math.max(100,viewers+Math.floor(Math.random()*41)-20);
- units.forEach(u=>{
-  if(Math.random()<.35){u.userData.tx+=((Math.random()-.5)*1.6);u.userData.tz+=((Math.random()-.5)*1.6)}
-  u.position.x+=(u.userData.tx-u.position.x)*.04;
-  u.position.z+=(u.userData.tz-u.position.z)*.04;
-  u.position.y=1.55+Math.sin(performance.now()*.004+u.userData.phase)*.08;
-  u.rotation.y+=.015;
- });
- if(Math.random()<.16){const i=Math.floor(Math.random()*3);clans[i].villages++;log('🏘️ '+clans[i].name+' expanded a settlement.');}
- render();
-}
-document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>gift(+b.dataset.add));
-document.getElementById('start').onclick=()=>{
- running=!running;
- document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';
- document.getElementById('status').textContent=running?'World is evolving…':'World paused.';
- if(running){timer=setInterval(tick,700);log('🔴 Civilization simulation started.');alertWorld('🔴 SIMULATION LIVE')}
- else{clearInterval(timer);log('⏸ Simulation paused.');}
-};
-document.getElementById('event').onclick=()=>{
- const i=Math.floor(Math.random()*3);
- const e=['opened a sea trade route','started a border conflict','discovered fertile land','sent explorers across the islands','expanded a settlement'];
- const msg=emojis[i]+' '+names[i]+' '+e[Math.floor(Math.random()*e.length)]+'.';
- log(msg);alertWorld(msg);render();
-};
-document.getElementById('disaster').onclick=triggerDisaster;
-document.getElementById('reset').onclick=()=>{
- clearInterval(timer);running=false;
- clans=names.map(n=>({name:n,members:0,points:0,villages:1,territory:0,leader:'No Leader'}));
- viewers=1284;camera.position.set(0,70,0);camera.lookAt(0,0,0);controls.target.set(0,0,0);
- document.getElementById('start').textContent='▶ Start';
- document.getElementById('status').textContent='World paused.';
- document.getElementById('events').innerHTML='';
- spawn();log('🌏 CLANWORLD PH map recreated.');alertWorld('🌏 WORLD RESET');render();
-};
-window.addEventListener('keydown',e=>{
- const k=e.key;
- if(['+','=','-','_','w','W','s','S','0'].includes(k)){
-  e.preventDefault();
-  const dir=(k==='+'||k==='='||k==='w'||k==='W')?-1:1;
-  if(k==='0'){camera.position.set(0,42,48);controls.target.set(0,0,2)}
-  else{
-   const v=new THREE.Vector3().subVectors(camera.position,controls.target).normalize();
-   camera.position.addScaledVector(v,dir*3.5);
-   const d=camera.position.distanceTo(controls.target);
-   if(d<13||d>92)camera.position.addScaledVector(v,-dir*3.5);
-  }
-  controls.update();
- }
-});
-window.addEventListener('resize',()=>{
- camera.left=-32*(innerWidth/Math.max(innerWidth,innerHeight));
- camera.right=32*(innerWidth/Math.max(innerWidth,innerHeight));
- camera.top=24;camera.bottom=-24;camera.updateProjectionMatrix();setPixelViewport();
-});
-function drawMini(){
- const c=document.getElementById('mini'),ctx=c.getContext('2d');
- c.width=260;c.height=270;ctx.fillStyle='#0a3a4a';ctx.fillRect(0,0,c.width,c.height);
- const sx=c.width/65,sz=c.height/58;
- islands.forEach(i=>{
-  ctx.beginPath();
-  const p=pts(i,.72);
-  p.forEach((q,n)=>{const x=(q.x+30)*sx,y=(q.y+27)*sz;n?ctx.lineTo(x,y):ctx.moveTo(x,y)});
-  ctx.closePath();ctx.fillStyle=['#668f4d','#628ea5','#8e7049'][i.clan];ctx.fill();
-  ctx.strokeStyle='#d9cf91';ctx.stroke();
- });
-}
-function updateDayNight(){
- dayTime=(dayTime+.002)%24;
- const daylight=Math.max(0,Math.sin((dayTime-6)/12*Math.PI));
- const night=1-daylight;
- sun.intensity=0;
- hemi.intensity=1;
- rim.intensity=0;
- scene.fog.color.copy(scene.background);
- document.getElementById('daycycle').textContent=(daylight>.35?'☀ DAY ':'🌙 NIGHT ')+'124 · '+String(Math.floor(dayTime)).padStart(2,'0')+':'+String(Math.floor((dayTime%1)*60)).padStart(2,'0');
-}
-spawn();drawMini();log('🌏 Philippine archipelago world loaded.');render();
-function animate(){
- requestAnimationFrame(animate);
- controls.update();
- updateDayNight();
- const now=performance.now()*.001;
- animated.forEach(a=>{
-  const o=a.object;
-  if(!o) return;
-  if(a.type==='tree'){
-   o.rotation.z=Math.sin(now*1.15+a.phase)*a.amp;
-   o.rotation.x=Math.cos(now*.9+a.phase)*a.amp*.55;
-  }else if(a.type==='cloud'){
-   o.position.x+=a.speed;
-   if(o.position.x>52)o.position.x=-52;
-   o.position.y+=Math.sin(now*.18+a.phase)*.0015;
-  }else if(a.type==='wave'){
-   const p=(Math.sin(now*1.4+a.phase)+1)/2;
-   o.scale.setScalar(.75+p*1.2);
-   o.material.opacity=.08+p*.13;
-  }else if(a.type==='foam'){
-   o.rotation.z=now*.18+a.phase;
-   o.scale.setScalar(.9+Math.sin(now*1.7+a.phase)*.12);
-  }else if(a.type==='river'){
-   o.position.x+=Math.sin(now*1.4+a.phase)*.018;
-   o.material.opacity=.72+.12*Math.sin(now*2+a.phase);
-  }else if(a.type==='smoke'){
-   o.position.y=3.7+Math.sin(now*.35+a.phase)*.35;
-   o.rotation.y+=.002;
-   o.scale.setScalar(1+Math.sin(now*.45+a.phase)*.06);
-  }else if(a.type==='gold'){
-   const pulse=.55+.45*Math.sin(now*2.6+a.phase);
-   o.material.emissiveIntensity=1.0+pulse*2.2;
-   o.scale.setScalar(.85+pulse*.35);
-  }else if(a.type==='fish'){
-   o.position.x=a.baseX+Math.sin(now*.8+a.phase)*.35;
-   o.position.z=a.baseZ+Math.cos(now*.9+a.phase)*.22;
-   o.position.y=-.35+Math.sin(now*2.2+a.phase)*.035;
-   o.rotation.y=Math.sin(now*.9+a.phase)*.35;
-  }else if(a.type==='bird'){
-   o.position.x+=a.speed;
-   o.position.z+=Math.sin(now*.7+a.phase)*.015;
-   o.rotation.y=Math.sin(now*1.7+a.phase)*.15;
-   if(o.position.x>40)o.position.x=-40;
-  }
- });
- units.forEach(u=>{
-  u.position.y=1.55+Math.sin(now*2.8+u.userData.phase)*.09;
- });
- if(disaster){
-  disaster.life+=.035;
-  const g=disaster.group;
-  if(disaster.type==='Earthquake'){g.children[0].scale.setScalar(1+disaster.life*.25);g.position.y=Math.sin(disaster.life*40)*.1}
-  if(disaster.type==='Typhoon'){g.rotation.y+=.025;g.position.x=Math.sin(disaster.life)*8;g.position.z=Math.cos(disaster.life)*5}
-  if(disaster.type==='Tsunami'){g.children[0].scale.setScalar(1+disaster.life*.55);g.children[0].material.opacity=Math.max(0,.85-disaster.life*.08)}
-  if(disaster.type==='Volcano'){g.children[0].scale.setScalar(1+Math.sin(disaster.life*2)*.12+disaster.life*.06)}
-  if(disaster.type==='Wildfire'){g.rotation.y+=.02;g.scale.setScalar(1+Math.sin(disaster.life*8)*.12)}
- }
- renderer.render(scene,camera);
-}
-animate();
+  viewers=clamp(viewers+Math.floor(Math.random()*25)-12,100,9999);
+  day=(day+.035)%24;
 
+  units.forEach(u=>{
+    if(u.step>=1||u.x===u.tx&&u.y===u.ty){
+      if(Math.random()<.16){
+        const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+        for(let q=0;q<8;q++){
+          const d=dirs[Math.floor(Math.random()*dirs.length)];
+          const nx=Math.round(u.x)+d[0],ny=Math.round(u.y)+d[1];
+          if(inMap(nx,ny)&&owner[idx(nx,ny)]===u.clan&&isLandCode(terrain[idx(nx,ny)])){u.tx=nx;u.ty=ny;u.step=0;break}
+        }
+      }
+    }else{
+      u.step=Math.min(1,u.step+.13);
+      u.x+=(u.tx-u.x)*.18;
+      u.y+=(u.ty-u.y)*.18;
+    }
+  });
+
+  if(Math.random()<.12){
+    const c=clans[Math.floor(Math.random()*3)];
+    c.villages=Math.min(99,c.villages+1);
+    log('🏘️ '+c.name+' expanded a settlement.');
+  }
+  if(shake>0)shake*=.82;
+  updateUI();
+}
+
+document.querySelectorAll('.gift').forEach(b=>b.addEventListener('click',()=>gift(+b.dataset.add)));
+document.getElementById('start').addEventListener('click',()=>{
+  running=!running;
+  document.getElementById('start').textContent=running?'⏸ Pause':'▶ Start';
+  document.getElementById('status').textContent=running?'World is evolving…':'World paused.';
+  if(running){
+    timer=setInterval(tick,700);
+    log('🔴 Civilization simulation started.');
+    alertWorld('🔴 SIMULATION LIVE');
+  }else{
+    clearInterval(timer);timer=null;log('⏸ Simulation paused.');
+  }
+});
+document.getElementById('event').addEventListener('click',randomEvent);
+document.getElementById('disaster').addEventListener('click',createDisaster);
+document.getElementById('reset').addEventListener('click',resetWorld);
+
+document.querySelectorAll('.navbtn').forEach((b,i)=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+    const names2=['Map view','Clan overview','Village overview','Resource view','Unit view','Build mode','Disaster mode','Event log'];
+    document.getElementById('status').textContent=names2[i]+' selected.';
+  });
+});
+
+mapCanvas.addEventListener('pointerdown',e=>{
+  pointer.down=true;pointer.lastX=e.clientX;pointer.lastY=e.clientY;mapCanvas.classList.add('dragging');mapCanvas.setPointerCapture(e.pointerId);
+});
+mapCanvas.addEventListener('pointermove',e=>{
+  if(!pointer.down)return;
+  const s=worldScale();
+  camera.x-=(e.clientX-pointer.lastX)/s;
+  camera.y-=(e.clientY-pointer.lastY)/s;
+  pointer.lastX=e.clientX;pointer.lastY=e.clientY;clampCamera();
+});
+mapCanvas.addEventListener('pointerup',e=>{pointer.down=false;mapCanvas.classList.remove('dragging');try{mapCanvas.releasePointerCapture(e.pointerId)}catch(_){}});
+mapCanvas.addEventListener('pointercancel',()=>{pointer.down=false;mapCanvas.classList.remove('dragging')});
+mapCanvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const before=screenToWorld(e.clientX,e.clientY);
+  camera.zoom=clamp(camera.zoom*(e.deltaY<0?1.15:.87),.8,4.2);
+  const after=screenToWorld(e.clientX,e.clientY);
+  camera.x+=before[0]-after[0];camera.y+=before[1]-after[1];clampCamera();
+},{passive:false});
+
+window.addEventListener('keydown',e=>{
+  if(['+','=','-','_','0'].includes(e.key)){
+    e.preventDefault();
+    if(e.key==='0'){camera={x:160,y:160,zoom:1}}
+    else camera.zoom=clamp(camera.zoom*(e.key==='+'||e.key==='='?1.15:.87),.8,4.2);
+    clampCamera();
+  }
+});
+window.addEventListener('resize',fit);
+
+initWorld();
+log('🌏 Philippine archipelago generated: 320×320 tiles.');
+log('🟡 Gold · 🌲 Forest · 🌾 Rice · 🐟 Fishing grounds ready.');
+
+function animate(now){
+  requestAnimationFrame(animate);
+  const d=Math.sin((day-6)/12*Math.PI);
+  drawFrame(now);
+  if(disaster){disaster.life+=.03}
+  if(d<.05&&Math.random()<.003)log('🌙 Nightfall across CLANWORLD PH.');
+}
+fit();
+animate(performance.now());
 </script>
 </body>
 </html>
