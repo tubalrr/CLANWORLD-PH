@@ -216,7 +216,7 @@ function addTree(x,z,s=1,kind=0){
  const a=new THREE.Mesh(new THREE.ConeGeometry(.48*s,.92*s,7),leafMat);a.position.y=1.12*s;
  const b=new THREE.Mesh(new THREE.ConeGeometry(.34*s,.72*s,7),leafMat);b.position.y=1.55*s;
  g.add(trunk,a,b);g.position.set(x,0,z);g.rotation.y=hash(x,z,3)*Math.PI;
- g.castShadow=true;scene.add(g);worldObjects.push(g);return g;
+ g.castShadow=true;scene.add(g);worldObjects.push(g);animated.push({type:'tree',object:g,phase:hash(x,z,91)*6.28,amp:.025+hash(x,z,92)*.025});return g;
 }
 function addMountain(x,z,h,s=1){
  const g=new THREE.Group();
@@ -296,6 +296,33 @@ function addIsland(isl){
  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(label),transparent:true,depthTest:false}));
  sprite.scale.set(5.6,1.1,1);sprite.position.set(isl.x,4.8,isl.z);scene.add(sprite);worldObjects.push(sprite);
 }
+function addCloud(x,y,z,s=1){
+ const g=new THREE.Group();
+ const mat=new THREE.MeshStandardMaterial({color:0xf0f4e7,transparent:true,opacity:.72,roughness:1});
+ for(let i=0;i<4;i++){
+  const puff=new THREE.Mesh(new THREE.SphereGeometry((1.2+hash(i,x,z))*s,12,8),mat);
+  puff.position.set((i-1.5)*1.15*s,hash(i,z,x)*.45*s,Math.sin(i*2.1)*.55*s);
+  g.add(puff);
+ }
+ g.position.set(x,y,z);scene.add(g);worldObjects.push(g);
+ animated.push({type:'cloud',object:g,phase:hash(x,z,101)*6.28,speed:.004+hash(x,z,102)*.003});
+}
+function addWaterWave(x,z,s=1){
+ const w=new THREE.Mesh(
+  new THREE.RingGeometry(.35*s,.58*s,16),
+  new THREE.MeshBasicMaterial({color:0xc5edf0,transparent:true,opacity:.16,side:THREE.DoubleSide})
+ );
+ w.rotation.x=-Math.PI/2;w.position.set(x,-.64,z);scene.add(w);worldObjects.push(w);
+ animated.push({type:'wave',object:w,phase:hash(x,z,103)*6.28});
+}
+function addBird(x,y,z){
+ const g=new THREE.Group();
+ const mat=new THREE.LineBasicMaterial({color:0x253b2b,transparent:true,opacity:.8});
+ const pts=[new THREE.Vector3(-.28,0,0),new THREE.Vector3(0,.12,0),new THREE.Vector3(.28,0,0)];
+ const wing=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),mat);
+ g.add(wing);g.position.set(x,y,z);scene.add(g);worldObjects.push(g);
+ animated.push({type:'bird',object:g,phase:hash(x,z,104)*6.28,speed:.018+hash(x,z,105)*.012});
+}
 function clearWorld(){
  worldObjects.forEach(o=>scene.remove(o));
  worldObjects=[];units=[];villages=[];animated=[];
@@ -309,7 +336,14 @@ function spawn(){
   const a=i/70*Math.PI*2,r=38+hash(i,2,4)*12;
   const foam=new THREE.Mesh(new THREE.RingGeometry(.25,.55,8),new THREE.MeshBasicMaterial({color:0xa9d4cf,transparent:true,opacity:.25,side:THREE.DoubleSide}));
   foam.rotation.x=-Math.PI/2;foam.position.set(Math.cos(a)*r,-.66,Math.sin(a)*r);scene.add(foam);worldObjects.push(foam);
+  animated.push({type:'foam',object:foam,phase:hash(i,4,106)*6.28});
  }
+ for(let i=0;i<28;i++){
+  const a=hash(i,5,107)*Math.PI*2,r=8+hash(i,6,108)*42;
+  addWaterWave(Math.cos(a)*r,Math.sin(a)*r,.55+hash(i,7,109)*.7);
+ }
+ for(let i=0;i<5;i++)addCloud(-28+i*15,12+hash(i,8,110)*5,-8+hash(i,9,111)*18,1.3+hash(i,10,112)*.8);
+ for(let i=0;i<8;i++)addBird(-25+hash(i,11,113)*48,7+hash(i,12,114)*8,-15+hash(i,13,115)*35);
  islands.forEach(addIsland);
  islands.forEach((isl,ii)=>{
   for(let j=0;j<5;j++){
@@ -391,6 +425,7 @@ function tick(){
   u.position.x+=(u.userData.tx-u.position.x)*.04;
   u.position.z+=(u.userData.tz-u.position.z)*.04;
   u.position.y=1.55+Math.sin(performance.now()*.004+u.userData.phase)*.08;
+  u.rotation.y+=.015;
  });
  if(Math.random()<.16){const i=Math.floor(Math.random()*3);clans[i].villages++;log('🏘️ '+clans[i].name+' expanded a settlement.');}
  render();
@@ -441,6 +476,34 @@ spawn();log('🌏 Low-poly island world loaded.');render();
 function animate(){
  requestAnimationFrame(animate);
  controls.update();
+ const now=performance.now()*.001;
+ animated.forEach(a=>{
+  const o=a.object;
+  if(!o) return;
+  if(a.type==='tree'){
+   o.rotation.z=Math.sin(now*1.15+a.phase)*a.amp;
+   o.rotation.x=Math.cos(now*.9+a.phase)*a.amp*.55;
+  }else if(a.type==='cloud'){
+   o.position.x+=a.speed;
+   if(o.position.x>52)o.position.x=-52;
+   o.position.y+=Math.sin(now*.18+a.phase)*.0015;
+  }else if(a.type==='wave'){
+   const p=(Math.sin(now*1.4+a.phase)+1)/2;
+   o.scale.setScalar(.75+p*1.2);
+   o.material.opacity=.08+p*.13;
+  }else if(a.type==='foam'){
+   o.rotation.z=now*.18+a.phase;
+   o.scale.setScalar(.9+Math.sin(now*1.7+a.phase)*.12);
+  }else if(a.type==='bird'){
+   o.position.x+=a.speed;
+   o.position.z+=Math.sin(now*.7+a.phase)*.015;
+   o.rotation.y=Math.sin(now*1.7+a.phase)*.15;
+   if(o.position.x>40)o.position.x=-40;
+  }
+ });
+ units.forEach(u=>{
+  u.position.y=1.55+Math.sin(now*2.8+u.userData.phase)*.09;
+ });
  if(disaster){
   disaster.life+=.035;
   const g=disaster.group;
@@ -453,6 +516,7 @@ function animate(){
  renderer.render(scene,camera);
 }
 animate();
+
 </script>
 </body>
 </html>
