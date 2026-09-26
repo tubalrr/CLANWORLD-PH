@@ -71,7 +71,7 @@ select{width:100%;margin:8px 0}
   <div class="live"><span class="liveDot"></span><b id="viewers">1,284</b> VIEWERS</div>
   <div id="alert" class="alert">⚠️ WORLD EVENT</div>
   <div class="cards" id="cards"></div>
-  <div class="hint">DRAG TO ROTATE · W/S OR +/− TO ZOOM · 0 RESET</div>
+  <div class="hint">🟡 GOLD · 🌲 WOOD · 🌾 FOOD · 🐟 FISH &nbsp; | &nbsp; DRAG TO ROTATE · W/S OR +/− TO ZOOM · 0 RESET</div>
 </div>
 
 <aside class="side">
@@ -196,6 +196,86 @@ function ringTerrain(isl,scale,y,color,height){
  const p=pts(isl,scale);
  return polyMesh(p,y,new THREE.MeshStandardMaterial({color,roughness:1}),height);
 }
+function addGold(isl){
+ const count=Math.max(2,Math.floor(isl.w/3.5));
+ for(let i=0;i<count;i++){
+  const x=isl.x+(hash(i,isl.seed,120)-.5)*isl.w*.48;
+  const z=isl.z+(hash(i,isl.seed,121)-.5)*isl.d*.42;
+  const rock=new THREE.Mesh(
+   new THREE.DodecahedronGeometry(.16+hash(i,isl.seed,122)*.09,0),
+   new THREE.MeshStandardMaterial({color:0x806b42,roughness:1})
+  );
+  rock.position.set(x,1.42,z);rock.scale.y=.55;scene.add(rock);worldObjects.push(rock);
+  const nugget=new THREE.Mesh(
+   new THREE.SphereGeometry(.055+hash(i,isl.seed,123)*.035,8,6),
+   new THREE.MeshStandardMaterial({color:0xffd83d,emissive:0xffb300,emissiveIntensity:1.6,roughness:.25,metalness:.45})
+  );
+  nugget.position.set(x+.06,1.59,z-.02);scene.add(nugget);worldObjects.push(nugget);
+  animated.push({type:'gold',object:nugget,phase:hash(i,isl.seed,124)*6.28});
+ }
+}
+function addWoodland(isl){
+ const count=Math.max(2,Math.floor(isl.w/2.7));
+ for(let i=0;i<count;i++){
+  const x=isl.x+(hash(i,isl.seed,130)-.5)*isl.w*.55;
+  const z=isl.z+(hash(i,isl.seed,131)-.5)*isl.d*.52;
+  const patch=new THREE.Mesh(
+   new THREE.CircleGeometry(.85+hash(i,isl.seed,132)*.5,10),
+   new THREE.MeshStandardMaterial({color:0x315b3a,roughness:1})
+  );
+  patch.rotation.x=-Math.PI/2;patch.position.set(x,1.44,z);scene.add(patch);worldObjects.push(patch);
+  for(let t=0;t<3;t++){
+   const tx=x+(hash(t,i,133)-.5)*1.2,tz=z+(hash(t,i,134)-.5)*1.2;
+   addTree(tx,tz,.58+hash(t,i,135)*.3,1);
+  }
+ }
+}
+function addFarmland(isl){
+ const count=Math.max(2,Math.floor(isl.w/3.2));
+ for(let i=0;i<count;i++){
+  const x=isl.x+(hash(i,isl.seed,140)-.5)*isl.w*.48;
+  const z=isl.z+(hash(i,isl.seed,141)-.5)*isl.d*.42;
+  const patch=new THREE.Mesh(
+   new THREE.CircleGeometry(.72+hash(i,isl.seed,142)*.38,8),
+   new THREE.MeshStandardMaterial({color:0xb6ce70,roughness:1})
+  );
+  patch.rotation.x=-Math.PI/2;patch.position.set(x,1.45,z);scene.add(patch);worldObjects.push(patch);
+  for(let row=0;row<3;row++){
+   const line=new THREE.Mesh(
+    new THREE.BoxGeometry(.9,.035,.045),
+    new THREE.MeshStandardMaterial({color:0x71994c,roughness:1})
+   );
+   line.position.set(x,1.49,z-.28+row*.28);scene.add(line);worldObjects.push(line);
+  }
+ }
+}
+function addFishGrounds(isl){
+ const count=Math.max(2,Math.floor(isl.w/3));
+ const p=pts(isl,1.12);
+ for(let i=0;i<count;i++){
+  const idx=(i*5+Math.floor(isl.seed))%p.length;
+  const edge=p[idx];
+  const inward=new THREE.Vector2(isl.x-edge.x,isl.z-edge.y).normalize();
+  const x=edge.x+inward.x*(.55+hash(i,isl.seed,150)*.5);
+  const z=edge.y+inward.y*(.55+hash(i,isl.seed,151)*.5);
+  const ground=new THREE.Mesh(
+   new THREE.RingGeometry(.45,.9,18),
+   new THREE.MeshBasicMaterial({color:0x8bd8d8,transparent:true,opacity:.18,side:THREE.DoubleSide})
+  );
+  ground.rotation.x=-Math.PI/2;ground.position.set(x,-.57,z);scene.add(ground);worldObjects.push(ground);
+  const fishGroup=new THREE.Group();
+  for(let f=0;f<3;f++){
+   const fish=new THREE.Mesh(
+    new THREE.ConeGeometry(.09,.34,6),
+    new THREE.MeshStandardMaterial({color:0xe4c96a,roughness:.65})
+   );
+   fish.rotation.z=Math.PI/2;fish.position.set((f-1)*.34,.05,Math.sin(f)*.18);
+   fishGroup.add(fish);
+  }
+  fishGroup.position.set(x,-.35,z);scene.add(fishGroup);worldObjects.push(fishGroup);
+  animated.push({type:'fish',object:fishGroup,phase:hash(i,isl.seed,152)*6.28,baseX:x,baseZ:z});
+ }
+}
 function addRoad(isl){
  const group=new THREE.Group();
  const mat=new THREE.MeshStandardMaterial({color:0x7b6341,roughness:1});
@@ -273,6 +353,10 @@ function addIsland(isl){
  addRoad(isl);
  addTown(isl);
  addVolcano(isl);
+ addGold(isl);
+ addWoodland(isl);
+ addFarmland(isl);
+ addFishGrounds(isl);
  const mCount=Math.max(2,Math.floor(isl.w/3));
  for(let i=0;i<mCount;i++){
   const x=isl.x+(hash(i,isl.seed,30)-.5)*isl.w*.52;
@@ -494,6 +578,15 @@ function animate(){
   }else if(a.type==='foam'){
    o.rotation.z=now*.18+a.phase;
    o.scale.setScalar(.9+Math.sin(now*1.7+a.phase)*.12);
+  }else if(a.type==='gold'){
+   const pulse=.55+.45*Math.sin(now*2.6+a.phase);
+   o.material.emissiveIntensity=1.0+pulse*2.2;
+   o.scale.setScalar(.85+pulse*.35);
+  }else if(a.type==='fish'){
+   o.position.x=a.baseX+Math.sin(now*.8+a.phase)*.35;
+   o.position.z=a.baseZ+Math.cos(now*.9+a.phase)*.22;
+   o.position.y=-.35+Math.sin(now*2.2+a.phase)*.035;
+   o.rotation.y=Math.sin(now*.9+a.phase)*.35;
   }else if(a.type==='bird'){
    o.position.x+=a.speed;
    o.position.z+=Math.sin(now*.7+a.phase)*.015;
